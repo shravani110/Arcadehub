@@ -1,0 +1,563 @@
+/* minimilitia.css - Authentic styling for Mini Militia Combat Game */
+
+.minimilitia-wrapper {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background-color: #000000;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Floating Navigation Header */
+.minimilitia-top-bar {
+  position: absolute;
+  top: 10px;
+  left: 14px;
+  right: 14px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 50;
+  pointer-events: none;
+}
+
+.mm-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mm-icon-btn {
+  pointer-events: auto;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  background: rgba(14, 14, 14, 0.75);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(6px);
+}
+
+.mm-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #ffffff;
+  transform: scale(1.05);
+}
+
+.mm-icon-btn:active {
+  transform: scale(0.95);
+}
+
+/* Canvas Container with Fixed 16:9 Aspect Ratio */
+.mm-canvas-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-width: 100vw;
+  max-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#mm-canvas {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  cursor: crosshair;
+}
+
+/* Mobile Touch Controls */
+.mm-touch-controls {
+  position: absolute;
+  bottom: 16px;
+  left: 0;
+  right: 0;
+  height: 150px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 24px;
+  pointer-events: none;
+  z-index: 40;
+}
+
+.mm-joystick-zone {
+  pointer-events: auto;
+  position: relative;
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.mm-joystick-base {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, rgba(0, 0, 0, 0.45) 100%);
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  opacity: 0.75;
+  transition: opacity 0.2s;
+}
+
+.mm-joystick-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #59b8eb, #0284c7);
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 10px rgba(89, 184, 235, 0.6);
+  pointer-events: none;
+  transform: translate(0px, 0px);
+  will-change: transform;
+}
+
+.mm-right-zone .mm-joystick-thumb {
+  background: radial-gradient(circle at 35% 35%, #22c55e, #15803d);
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.6);
+}
+
+.mm-zone-hint {
+  margin-top: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.6);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+/* Quick Action Buttons */
+.mm-action-buttons {
+  pointer-events: auto;
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.mm-action-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(20, 20, 20, 0.8);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  transition: transform 0.1s ease;
+}
+
+.mm-reload-btn {
+  border-color: #f59e0b;
+  color: #f59e0b;
+}
+
+.mm-boost-btn {
+  border-color: #0099ff;
+}
+
+.mm-action-btn:active {
+  transform: scale(0.9);
+}
+
+/* Hide touch joystick on wide desktop screens when mouse is primary */
+@media (hover: hover) and (pointer: fine) and (min-width: 900px) {
+  .mm-touch-controls {
+    display: none;
+  }
+}
+
+/* Modal Overlays (Start Screen & Game Over) */
+.mm-modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+}
+
+.mm-modal-card {
+  width: 100%;
+  max-width: 480px;
+  background: linear-gradient(145deg, #18222d 0%, #0d131a 100%);
+  border: 1.5px solid rgba(89, 184, 235, 0.35);
+  border-radius: 16px;
+  padding: 28px 24px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 30px rgba(89, 184, 235, 0.15);
+  text-align: center;
+  color: #ffffff;
+  animation: mmModalPop 0.25s ease-out;
+}
+
+@keyframes mmModalPop {
+  0% { transform: scale(0.92); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.mm-modal-badge {
+  display: inline-block;
+  background: rgba(89, 184, 235, 0.2);
+  border: 1px solid rgba(89, 184, 235, 0.5);
+  color: #59b8eb;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  padding: 3px 12px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+
+.mm-modal-title {
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  margin: 0 0 6px 0;
+  background: linear-gradient(135deg, #ffffff 40%, #59b8eb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.mm-modal-subtitle {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 13px;
+  margin: 0 0 20px 0;
+  line-height: 1.4;
+}
+
+/* Mode Selector Cards */
+.mm-mode-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.mm-mode-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.mm-mode-option:hover {
+  background: rgba(89, 184, 235, 0.1);
+  border-color: rgba(89, 184, 235, 0.4);
+}
+
+.mm-mode-option.selected {
+  background: rgba(89, 184, 235, 0.18);
+  border-color: #59b8eb;
+  box-shadow: 0 0 16px rgba(89, 184, 235, 0.25);
+}
+
+.mm-mode-icon {
+  font-size: 24px;
+}
+
+.mm-mode-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.mm-mode-desc {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 2px;
+}
+
+/* Controls Guide */
+.mm-controls-guide {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+
+.mm-guide-item {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mm-guide-key {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 10px;
+  color: #ffd700;
+}
+
+/* Big Start Button */
+.mm-start-btn {
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  border: none;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(34, 197, 94, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mm-start-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(34, 197, 94, 0.6);
+}
+
+.mm-start-btn:active {
+  transform: translateY(1px);
+}
+
+.mm-secondary-btn {
+  width: 100%;
+  padding: 12px 20px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.mm-secondary-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Game Over Stats */
+.mm-gameover-stats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.mm-stat-box {
+  flex: 1;
+  padding: 14px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+}
+
+.blue-stat {
+  border-color: rgba(0, 102, 255, 0.5);
+  box-shadow: 0 0 12px rgba(0, 102, 255, 0.2);
+}
+
+.red-stat {
+  border-color: rgba(230, 0, 0, 0.5);
+  box-shadow: 0 0 12px rgba(230, 0, 0, 0.2);
+}
+
+.stat-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.65);
+  letter-spacing: 1px;
+}
+
+.stat-val {
+  font-size: 28px;
+  font-weight: 900;
+  margin-top: 4px;
+}
+
+.blue-stat .stat-val { color: #59b8eb; }
+.red-stat .stat-val { color: #ff5252; }
+
+.mm-gameover-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Mandatory Mobile & Tablet Landscape Orientation Overlay */
+.mm-rotate-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(8, 12, 16, 0.96);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  z-index: 99999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  color: #ffffff;
+}
+
+/* Automatically display when viewport or device is in portrait */
+@media screen and (orientation: portrait) {
+  .mm-rotate-overlay {
+    display: flex !important;
+  }
+}
+
+.mm-rotate-overlay.active {
+  display: flex !important;
+}
+
+@media screen and (orientation: landscape) {
+  .mm-rotate-overlay:not(.force-show) {
+    display: none !important;
+  }
+}
+
+.mm-rotate-card {
+  max-width: 440px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(145deg, #18222d 0%, #0d131a 100%);
+  border: 1.5px solid rgba(89, 184, 235, 0.4);
+  border-radius: 20px;
+  padding: 32px 24px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 35px rgba(89, 184, 235, 0.2);
+  animation: mmModalPop 0.3s ease-out;
+}
+
+.mm-phone-anim {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.mm-phone-silhouette {
+  width: 50px;
+  height: 90px;
+  border: 3.5px solid #ffffff;
+  border-radius: 12px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 20px rgba(89, 184, 235, 0.4);
+  animation: mmPhoneRotate 2.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.mm-phone-silhouette::before {
+  content: '';
+  position: absolute;
+  top: 5px;
+  width: 16px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 2px;
+}
+
+.mm-phone-screen-inner {
+  width: 36px;
+  height: 66px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #0284c7 0%, #22c55e 100%);
+  opacity: 0.85;
+}
+
+@keyframes mmPhoneRotate {
+  0%, 15% {
+    transform: rotate(0deg);
+  }
+  45%, 75% {
+    transform: rotate(-90deg);
+  }
+  95%, 100% {
+    transform: rotate(0deg);
+  }
+}
+
+.mm-rotate-icon {
+  position: absolute;
+  color: #22c55e;
+  animation: mmArrowPulse 2.6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes mmArrowPulse {
+  0%, 15% { opacity: 0.3; transform: scale(0.9); }
+  45%, 75% { opacity: 1; transform: scale(1.1); }
+  95%, 100% { opacity: 0.3; transform: scale(0.9); }
+}
+
+.mm-rotate-title {
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  margin: 10px 0 8px 0;
+  background: linear-gradient(135deg, #ffffff 40%, #59b8eb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.mm-rotate-subtitle {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0 0 24px 0;
+}

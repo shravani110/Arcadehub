@@ -1,0 +1,115 @@
+/* Sugar Rush Styles */
+.sugarrush-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #1b121a;
+  user-select: none;
+  touch-action: none;
+}
+
+#sugarrush-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.sugarrush-top-bar {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.sugarrush-top-bar .top-controls {
+  pointer-events: auto;
+  display: flex;
+  gap: 10px;
+}
+
+.sugarrush-hud {
+  display: flex;
+  gap: 12px;
+  pointer-events: auto;
+}
+
+.sugarrush-hud-card {
+  background: rgba(27, 18, 26, 0.88);
+  border: 1px solid rgba(239, 131, 161, 0.3);
+  border-radius: 12px;
+  padding: 6px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+
+.sugarrush-hud-lbl {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #ef83a1;
+  text-transform: uppercase;
+}
+
+.sugarrush-hud-val {
+  font-size: 18px;
+  font-weight: 900;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+/* On-screen lane tap triggers for mobile */
+.sugarrush-lane-triggers {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 26%;
+  display: flex;
+  z-index: 8;
+  pointer-events: auto;
+}
+
+.sugarrush-lane-btn {
+  flex: 1;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  transition: background 0.1s ease;
+}
+
+.sugarrush-lane-btn:active {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sugarrush-hint {
+  position: absolute;
+  top: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(239, 131, 161, 0.35);
+  color: #f1faee;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  pointer-events: none;
+  z-index: 5;
+  transition: opacity 0.4s ease;
+  backdrop-filter: blur(6px);
+}

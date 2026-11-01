@@ -1,0 +1,88 @@
+/* Laddu Launcher Styles */
+.laddulauncher-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #14170e;
+  user-select: none;
+  touch-action: none;
+}
+
+#laddulauncher-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.laddulauncher-top-bar {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.laddulauncher-top-bar .top-controls {
+  pointer-events: auto;
+  display: flex;
+  gap: 10px;
+}
+
+.laddulauncher-hud {
+  display: flex;
+  gap: 12px;
+  pointer-events: auto;
+}
+
+.laddulauncher-hud-card {
+  background: rgba(20, 24, 14, 0.85);
+  border: 1px solid rgba(255, 209, 102, 0.28);
+  border-radius: 12px;
+  padding: 6px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+
+.laddulauncher-hud-lbl {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #ffd166;
+  text-transform: uppercase;
+}
+
+.laddulauncher-hud-val {
+  font-size: 18px;
+  font-weight: 900;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.laddulauncher-hint {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 209, 102, 0.35);
+  color: #f1faee;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  pointer-events: none;
+  z-index: 5;
+  transition: opacity 0.4s ease;
+  backdrop-filter: blur(6px);
+}

@@ -1,0 +1,100 @@
+/* icecream.css - Styles for Ice Cream Stacking Game */
+.icecream-wrapper {
+  background-color: #07080a;
+}
+
+#icecream-canvas {
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.flavor-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-glass);
+  padding: 6px 14px;
+  border-radius: 20px;
+}
+
+.flavor-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #542d17;
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
+}
+
+.flavor-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.3px;
+}
+
+.tap-hint {
+  position: absolute;
+  top: 155px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  padding: 8px 18px;
+  border-radius: 24px;
+  font-size: 14px;
+  font-weight: 600;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+  animation: pulseHint 2s infinite ease-in-out;
+}
+
+@keyframes pulseHint {
+  0%, 100% { opacity: 0.85; transform: translateX(-50%) translateY(0); }
+  50% { opacity: 1; transform: translateX(-50%) translateY(-4px); }
+}
+
+/* Mobile Responsive Scaling */
+@media (max-width: 640px) {
+  .flavor-indicator {
+    padding: 4px 10px;
+    gap: 6px;
+    max-width: 160px;
+  }
+
+  .flavor-dot {
+    width: 10px;
+    height: 10px;
+    flex-shrink: 0;
+  }
+
+  .flavor-name {
+    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tap-hint {
+    top: 130px;
+    font-size: 12px;
+    padding: 6px 14px;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 380px) {
+  .flavor-indicator {
+    padding: 3px 8px;
+    max-width: 120px;
+  }
+
+  .flavor-name {
+    font-size: 10px;
+  }
+}

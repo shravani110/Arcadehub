@@ -1,0 +1,392 @@
+/* Tiffin Run - Authentic London Cafe Arcade Styling */
+
+.tiffinrun-wrapper {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  background-color: #141210;
+  color: #f3ead9;
+  user-select: none;
+  touch-action: none;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Tablet & Desktop Centered Stage */
+@media (min-width: 600px) {
+  .tiffinrun-wrapper {
+    max-width: 580px;
+    margin: 0 auto;
+    left: 0;
+    right: 0;
+    box-shadow: 0 0 60px rgba(0, 0, 0, 0.85);
+    border-left: 1px solid rgba(244, 140, 6, 0.15);
+    border-right: 1px solid rgba(244, 140, 6, 0.15);
+  }
+}
+
+/* Exact Top Bar matching London Cafe */
+.tiffinrun-top-bar {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: #1b1815;
+  padding: 10px 16px;
+  box-sizing: border-box;
+}
+
+.tiffinrun-back-btn,
+.tiffinrun-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #f3ead9;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.1s ease, background-color 0.2s ease;
+  outline: none;
+  padding: 0;
+}
+
+.tiffinrun-back-btn:active,
+.tiffinrun-icon-btn:active {
+  transform: scale(0.9);
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.tiffinrun-header-title-box {
+  min-width: 0;
+  flex: 1;
+}
+
+.tiffinrun-header-title {
+  margin: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #f3ead9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tiffinrun-header-subtitle {
+  margin: 2px 0 0 0;
+  font-size: 11px;
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tiffinrun-hud-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.tiffinrun-hearts {
+  color: #ff5d5d;
+  letter-spacing: 1px;
+}
+
+.tiffinrun-score-display {
+  color: #f3ead9;
+}
+
+.tiffinrun-stat-divider {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.tiffinrun-best-display {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #c5a059;
+}
+
+/* Canvas Area */
+.tiffinrun-canvas-container {
+  position: relative;
+  min-height: 0;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+}
+
+#tiffinrun-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Splash / Start Screen matching orig_tiffin_run.png */
+.tiffinrun-splash-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  background-color: #141210;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.tiffinrun-splash-badge {
+  color: #f48c06;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.tiffinrun-splash-title {
+  margin: 0 0 12px 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 38px;
+  font-weight: 400;
+  color: #f3ead9;
+  text-align: center;
+}
+
+.tiffinrun-splash-blurb {
+  margin: 0 0 24px 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.65);
+  text-align: center;
+  max-width: 440px;
+  line-height: 1.5;
+}
+
+.tiffinrun-how-box {
+  background-color: #1b1815;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 20px 24px;
+  max-width: 440px;
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 24px;
+}
+
+.tiffinrun-how-list {
+  margin: 0;
+  padding: 0 0 0 16px;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.tiffinrun-how-list li {
+  margin-bottom: 6px;
+}
+
+.tiffinrun-how-list li:last-child {
+  margin-bottom: 0;
+}
+
+.tiffinrun-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 24px;
+}
+
+.tiffinrun-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tiffinrun-play-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 440px;
+  height: 52px;
+  background-color: #f48c06;
+  color: #141210;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.1s ease, background-color 0.2s ease, filter 0.2s ease;
+  box-shadow: 0 6px 20px rgba(244, 140, 6, 0.35);
+}
+
+.tiffinrun-play-btn:hover {
+  background-color: #ff9e2c;
+  filter: brightness(1.05);
+}
+
+.tiffinrun-play-btn:active {
+  transform: scale(0.98);
+}
+
+.tiffinrun-back-link {
+  margin-top: 16px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.45);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+
+.tiffinrun-back-link:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Modal Overlay matching styling */
+.tiffinrun-modal-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  background-color: rgba(12, 10, 8, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.tiffinrun-modal-card {
+  background-color: #1b1815;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 32px 28px;
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+.tiffinrun-modal-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.tiffinrun-modal-title {
+  margin: 0 0 6px 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 26px;
+  font-weight: 600;
+  color: #f3ead9;
+}
+
+.tiffinrun-modal-desc {
+  margin: 0 0 24px 0;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.5;
+}
+
+.tiffinrun-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.tiffinrun-stat-box {
+  background-color: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tiffinrun-stat-lbl {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.45);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.tiffinrun-stat-val {
+  font-size: 20px;
+  font-weight: 800;
+  color: #f3ead9;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+}
+
+.tiffinrun-modal-actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.tiffinrun-btn-primary {
+  flex: 1;
+  height: 44px;
+  background-color: #f48c06;
+  color: #141210;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.1s, background-color 0.2s;
+}
+
+.tiffinrun-btn-primary:active {
+  transform: scale(0.96);
+}
+
+.tiffinrun-btn-secondary {
+  flex: 1;
+  height: 44px;
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #f3ead9;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.1s, background-color 0.2s;
+}
+
+.tiffinrun-btn-secondary:active {
+  transform: scale(0.96);
+}
+
+.hidden {
+  display: none !important;
+}

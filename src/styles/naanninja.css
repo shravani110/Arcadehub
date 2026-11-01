@@ -1,0 +1,94 @@
+/* naanninja.css - Styling for Naan Ninja Arcade Slicer */
+
+.naanninja-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #08120d;
+  overflow: hidden;
+  user-select: none;
+  touch-action: none;
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  cursor: crosshair;
+}
+
+#naanninja-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Top bar controls */
+.naanninja-top-bar {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.naanninja-top-bar * {
+  pointer-events: auto;
+}
+
+.naanninja-hud {
+  display: flex;
+  gap: 10px;
+}
+
+.naanninja-hud-card {
+  background: rgba(13, 26, 20, 0.85);
+  border: 1px solid rgba(6, 214, 160, 0.3);
+  backdrop-filter: blur(8px);
+  padding: 6px 14px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+
+.naanninja-hud-lbl {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #a3c2b5;
+}
+
+.naanninja-hud-val {
+  font-size: 18px;
+  font-weight: 800;
+  color: #06d6a0;
+  line-height: 1.1;
+}
+
+/* Double Score Banner */
+.naanninja-fever-banner {
+  position: absolute;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #ffd166, #f77f00);
+  color: #1a0e04;
+  font-weight: 900;
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  padding: 4px 16px;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(255, 209, 102, 0.6);
+  pointer-events: none;
+  animation: pulse 0.6s infinite alternate;
+  z-index: 20;
+}
+
+@keyframes pulse {
+  from { transform: translateX(-50%) scale(1); }
+  to { transform: translateX(-50%) scale(1.08); }
+}

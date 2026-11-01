@@ -1,0 +1,109 @@
+/* bloom.css - Authentic Bloom Sort 4x4 Flower Pot Matching Game Styles */
+.bloom-wrapper {
+  background: #3f7b51;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#bloom-canvas {
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  display: block;
+}
+
+/* Bottom Boosters Bar */
+.bloom-boosters-bar {
+  position: absolute;
+  bottom: max(22px, env(safe-area-inset-bottom, 22px));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  z-index: 30;
+}
+
+.booster-btn {
+  position: relative;
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  background: #2563eb;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.booster-btn:active {
+  transform: scale(0.92);
+}
+
+.booster-btn.active {
+  border-color: #facc15;
+  box-shadow: 0 0 16px #facc15;
+  transform: translateY(-4px);
+}
+
+#booster-reroll {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+#booster-shuffle {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+}
+
+#booster-prune {
+  background: linear-gradient(135deg, #ec4899, #db2777);
+}
+
+#booster-water {
+  background: linear-gradient(135deg, #eab308, #ca8a04);
+}
+
+.booster-icon {
+  font-size: 24px;
+}
+
+.booster-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 11px;
+  font-weight: 900;
+  width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+@media (max-width: 640px) {
+  .bloom-boosters-bar {
+    gap: 12px;
+  }
+  .booster-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+  }
+  .booster-icon {
+    font-size: 20px;
+  }
+}

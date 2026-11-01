@@ -1,0 +1,124 @@
+/* dumplings.css - Styles for Squishy Dumplings Merge Game */
+.dumpling-wrapper {
+  background-color: #14241d;
+}
+
+#dumpling-canvas {
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.dumpling-score-board {
+  display: flex;
+  gap: 12px;
+}
+
+.score-card {
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-glass);
+  padding: 6px 14px;
+  border-radius: var(--radius-md);
+  text-align: center;
+  min-width: 70px;
+}
+
+.score-lbl {
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  color: #ffd899;
+  letter-spacing: 0.5px;
+}
+
+.score-val {
+  display: block;
+  font-size: 18px;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.next-dumpling-preview {
+  position: absolute;
+  top: 76px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  z-index: 40;
+}
+
+.next-lbl {
+  font-size: 10px;
+  font-weight: 800;
+  color: #ffd899;
+}
+
+.next-bubble {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1.5px solid #ffffff;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+  transition: background 0.25s ease;
+}
+
+/* Mobile Responsive Scaling */
+@media (max-width: 640px) {
+  .dumpling-score-board {
+    gap: 8px;
+  }
+
+  .score-card {
+    padding: 4px 10px;
+    min-width: 58px;
+    border-radius: 10px;
+  }
+
+  .score-lbl {
+    font-size: 9px;
+  }
+
+  .score-val {
+    font-size: 15px;
+  }
+
+  .next-dumpling-preview {
+    top: 64px;
+    right: 12px;
+    padding: 6px 10px;
+    border-radius: 10px;
+    gap: 4px;
+  }
+
+  .next-lbl {
+    font-size: 9px;
+  }
+
+  .next-bubble {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+@media (max-width: 380px) {
+  .dumpling-score-board {
+    gap: 6px;
+  }
+
+  .score-card {
+    padding: 3px 8px;
+    min-width: 50px;
+  }
+
+  .score-val {
+    font-size: 13px;
+  }
+}
