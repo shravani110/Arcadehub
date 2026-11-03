@@ -136,7 +136,59 @@ class ArcadeApp {
     } catch (err) {
       console.error('Failed to load game view:', err);
       this.currentView = new HubView(this.appContainer, (gameId) => this.navigateTo(gameId));
+      this.showErrorNotice(hash, err);
     }
+  }
+
+  showErrorNotice(gameId, err) {
+    const existing = document.getElementById('arcade-err-toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.id = 'arcade-err-toast';
+    toast.style.cssText = `
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(30, 18, 18, 0.95);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+      padding: 14px 20px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 14px;
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      max-width: 90vw;
+    `;
+
+    toast.innerHTML = `
+      <span style="font-size: 18px;">⚠️</span>
+      <div>
+        <div style="font-weight: 700; color: #fff;">Unable to load game module</div>
+        <div style="font-size: 12px; opacity: 0.85;">Local server may be stopped. Run <code>npm run dev</code> or test on the live Vercel URL.</div>
+      </div>
+      <button style="background: #ef4444; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; margin-left: 8px;">Retry</button>
+      <button style="background: transparent; color: #aaa; border: none; font-size: 18px; cursor: pointer; padding: 0 4px;" title="Dismiss">&times;</button>
+    `;
+
+    const retryBtn = toast.querySelector('button');
+    retryBtn.addEventListener('click', () => {
+      toast.remove();
+      this.navigateTo(gameId);
+    });
+
+    const closeBtn = toast.querySelectorAll('button')[1];
+    closeBtn.addEventListener('click', () => toast.remove());
+
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      if (toast.parentNode) toast.remove();
+    }, 8000);
   }
 
   navigateTo(viewId) {
