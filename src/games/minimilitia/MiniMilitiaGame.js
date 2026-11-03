@@ -219,11 +219,6 @@ export class MiniMilitiaGame {
             <span class="mm-zone-hint">MOVE / FLY</span>
           </div>
 
-          <!-- Quick Action Buttons -->
-          <div class="mm-action-buttons">
-            <button class="mm-action-btn mm-reload-btn" id="mm-mobile-reload">R</button>
-            <button class="mm-action-btn mm-boost-btn" id="mm-mobile-boost">🚀</button>
-          </div>
 
           <!-- Right Aim & Shoot Joystick Area -->
           <div class="mm-joystick-zone mm-right-zone" id="mm-right-zone">
@@ -422,22 +417,6 @@ export class MiniMilitiaGame {
     const rightBase = this.container.querySelector('#mm-right-base');
     const rightThumb = this.container.querySelector('#mm-right-thumb');
 
-    const reloadBtn = this.container.querySelector('#mm-mobile-reload');
-    const boostBtn = this.container.querySelector('#mm-mobile-boost');
-
-    reloadBtn?.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      this.reload();
-    });
-
-    boostBtn?.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      this.keys.up = true;
-    });
-    boostBtn?.addEventListener('touchend', (e) => {
-      e.preventDefault();
-      this.keys.up = false;
-    });
 
     // Left Touch Joystick (Movement & Jetpack)
     const handleLeftTouch = (touch) => {

@@ -149,44 +149,6 @@
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
 }
 
-/* Quick Action Buttons */
-.mm-action-buttons {
-  pointer-events: auto;
-  display: flex;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.mm-action-btn {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background: rgba(20, 20, 20, 0.8);
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  color: #ffffff;
-  font-weight: 800;
-  font-size: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  transition: transform 0.1s ease;
-}
-
-.mm-reload-btn {
-  border-color: #f59e0b;
-  color: #f59e0b;
-}
-
-.mm-boost-btn {
-  border-color: #0099ff;
-}
-
-.mm-action-btn:active {
-  transform: scale(0.9);
-}
 
 /* Hide touch joystick on wide desktop screens when mouse is primary */
 @media (hover: hover) and (pointer: fine) and (min-width: 900px) {
