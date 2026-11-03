@@ -76,20 +76,29 @@ export class MiniMilitiaRenderer {
     ctx.save();
     ctx.scale(dpr, dpr);
 
-    // Calculate view scale from fixed 1280x720 base viewport
-    const baseW = 1280;
+    // Calculate view scale from dynamic base viewport.
+    // Base height is 720. On widescreen mobile landscape displays (e.g. 18:9, 19.5:9, 20:9),
+    // dynamically expand baseW up to the worldWidth (2160) so the game renders edge-to-edge
+    // with ZERO black bars on left and right.
     const baseH = 720;
+    const aspect = this.width / Math.max(1, this.height);
+    const baseW = aspect >= (16 / 9) ? Math.min(2160, Math.round(baseH * aspect)) : 1280;
     const scale = Math.min(this.width / baseW, this.height / baseH);
     const viewW = baseW * scale;
     const viewH = baseH * scale;
     const viewOffsetX = (this.width - viewW) / 2;
     const viewOffsetY = (this.height - viewH) / 2;
 
-    // Fill screen black
+    this.lastBaseW = baseW;
+    this.lastScale = scale;
+    this.lastViewOffsetX = viewOffsetX;
+    this.lastViewOffsetY = viewOffsetY;
+
+    // Fill screen black for any letterboxing
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, this.width, this.height);
 
-    // Clip to 16:9 game viewport
+    // Clip to game viewport
     ctx.save();
     ctx.beginPath();
     ctx.rect(viewOffsetX, viewOffsetY, viewW, viewH);
@@ -161,9 +170,8 @@ export class MiniMilitiaRenderer {
 
     // 2. Seamless Distant Panoramic Jungle (Single continuous vista, NO tiling cuts or pasted seams)
     if (this.images.bg2.complete && this.images.bg2.naturalWidth > 0) {
-      // World is 2160 wide. Camera view is baseW (1280). Max camera scroll = 880 (2160 - 1280).
-      // Extra width gives subtle depth/parallax without ANY tiling seams.
-      const extraW = 260;
+      // Extra width gives subtle depth/parallax without ANY tiling seams
+      const extraW = Math.max(260, Math.round((2160 - baseW) * 0.35));
       const bgW = baseW + extraW;
       const bgH = baseH;
       const maxScroll = Math.max(1, 2160 - baseW);

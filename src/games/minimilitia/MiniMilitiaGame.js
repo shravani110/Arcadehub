@@ -96,8 +96,8 @@ export class MiniMilitiaGame {
     this.checkOrientation();
 
     // Initial camera centered on player
-    const baseW = 1280;
-    this.cameraX = Math.max(0, Math.min(this.player.x + this.player.width / 2 - baseW / 2, this.physics.worldWidth - baseW));
+    const { baseW } = this.getBaseViewport();
+    this.cameraX = Math.max(0, Math.min(this.player.x + this.player.width / 2 - baseW / 2, Math.max(0, this.physics.worldWidth - baseW)));
 
     this.isRunning = true;
     this.lastTime = Date.now();
@@ -388,8 +388,8 @@ export class MiniMilitiaGame {
     this.player.spawnProtection = Date.now() + 2500;
 
     // Immediately snap camera to player
-    const baseW = 1280;
-    this.cameraX = Math.max(0, Math.min(this.player.x + this.player.width / 2 - baseW / 2, this.physics.worldWidth - baseW));
+    const { baseW } = this.getBaseViewport();
+    this.cameraX = Math.max(0, Math.min(this.player.x + this.player.width / 2 - baseW / 2, Math.max(0, this.physics.worldWidth - baseW)));
     this.cameraY = 0;
     this.aimX = this.player.x + this.player.width / 2 + 120;
     this.aimY = this.player.y + this.player.height / 2;
@@ -568,8 +568,7 @@ export class MiniMilitiaGame {
   handleMouseMove(e) {
     if (!this.canvas) return;
     const rect = this.canvas.getBoundingClientRect();
-    const baseW = 1280;
-    const baseH = 720;
+    const { baseW, baseH } = this.getBaseViewport();
     const scale = Math.min(rect.width / baseW, rect.height / baseH);
     const viewW = baseW * scale;
     const viewH = baseH * scale;
@@ -634,6 +633,15 @@ export class MiniMilitiaGame {
         rotateOverlay.classList.remove('active');
       }
     }
+  }
+
+  getBaseViewport() {
+    const baseH = 720;
+    const w = this.canvas?.clientWidth || window.innerWidth;
+    const h = this.canvas?.clientHeight || window.innerHeight;
+    const aspect = w / Math.max(1, h);
+    const baseW = aspect >= (16 / 9) ? Math.min(2160, Math.round(baseH * aspect)) : 1280;
+    return { baseW, baseH };
   }
 
   handleResize() {
@@ -951,12 +959,12 @@ export class MiniMilitiaGame {
   }
 
   updateCamera() {
-    const baseW = 1280;
+    const { baseW } = this.getBaseViewport();
     const targetCamX = this.player.x + this.player.width / 2 - baseW / 2;
     // Smooth camera tracking
     this.cameraX += (targetCamX - this.cameraX) * 0.12;
     // Clamp within world bounds
-    this.cameraX = Math.max(0, Math.min(this.cameraX, this.physics.worldWidth - baseW));
+    this.cameraX = Math.max(0, Math.min(this.cameraX, Math.max(0, this.physics.worldWidth - baseW)));
     this.cameraY = 0;
   }
 
@@ -1035,8 +1043,8 @@ export class MiniMilitiaGame {
     this.player.spawnProtection = Date.now() + 2000; // 2s spawn invulnerability aura
 
     // IMMEDIATELY snap camera directly to our soldier so they appear right in the center!
-    const baseW = 1280;
-    this.cameraX = Math.max(0, Math.min(this.player.x + this.player.width / 2 - baseW / 2, this.physics.worldWidth - baseW));
+    const { baseW } = this.getBaseViewport();
+    this.cameraX = Math.max(0, Math.min(this.player.x + this.player.width / 2 - baseW / 2, Math.max(0, this.physics.worldWidth - baseW)));
     this.aimX = this.player.x + this.player.width / 2 + 100;
     this.aimY = this.player.y + this.player.height / 2;
 
