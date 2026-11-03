@@ -327,13 +327,51 @@ export class HubView {
       </div>
     `;
 
-    // Event listeners
-    this.container.querySelectorAll('.game-card').forEach(card => {
-      card.addEventListener('click', () => {
+    // Robust Click Handling: Delegation + Direct Card & Button Listeners
+    const launchGame = (gameId) => {
+      if (!gameId) return;
+      try {
         soundManager.playClick();
-        const gameId = card.dataset.game;
-        this.onSelectGame(gameId);
+      } catch (_) {}
+      this.onSelectGame(gameId);
+    };
+
+    // Direct card and play button clicks
+    this.container.querySelectorAll('.game-card').forEach(card => {
+      const gameId = card.dataset.game;
+      card.addEventListener('click', () => {
+        launchGame(gameId);
       });
+
+      const playBtn = card.querySelector('.card-play-btn');
+      if (playBtn) {
+        playBtn.setAttribute('type', 'button');
+        playBtn.dataset.game = gameId;
+        playBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          launchGame(gameId);
+        });
+      }
+    });
+
+    // Delegated container click fallback
+    this.container.addEventListener('click', (e) => {
+      const playBtn = e.target.closest('.card-play-btn');
+      if (playBtn) {
+        const card = playBtn.closest('.game-card');
+        const gameId = card?.dataset.game || playBtn.dataset.game;
+        if (gameId) {
+          e.stopPropagation();
+          e.preventDefault();
+          launchGame(gameId);
+        }
+        return;
+      }
+      const card = e.target.closest('.game-card');
+      if (card && card.dataset.game) {
+        launchGame(card.dataset.game);
+      }
     });
 
     this.container.querySelector('#hub-sound-btn').addEventListener('click', (e) => {

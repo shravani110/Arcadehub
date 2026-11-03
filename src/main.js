@@ -22,12 +22,17 @@ class ArcadeApp {
     this.appContainer = document.getElementById('app');
     this.currentGame = null;
     this.currentView = null;
+    this.currentRoute = null;
 
     this.initRouter();
   }
 
   initRouter() {
     window.addEventListener('hashchange', () => {
+      this.route();
+    });
+
+    window.addEventListener('popstate', () => {
       this.route();
     });
 
@@ -39,12 +44,22 @@ class ArcadeApp {
     const rawHash = window.location.hash.replace('#', '') || 'hub';
     const hash = rawHash.split('?')[0].replace(/^game=/, '');
 
+    this.currentRoute = hash;
+
     if (this.currentGame) {
-      this.currentGame.destroy();
+      try {
+        this.currentGame.destroy();
+      } catch (e) {
+        console.warn('Error destroying active game:', e);
+      }
       this.currentGame = null;
     }
     if (this.currentView) {
-      this.currentView.destroy();
+      try {
+        this.currentView.destroy();
+      } catch (e) {
+        console.warn('Error destroying active view:', e);
+      }
       this.currentView = null;
     }
 
@@ -125,7 +140,19 @@ class ArcadeApp {
   }
 
   navigateTo(viewId) {
-    window.location.hash = viewId;
+    const targetHash = `#${viewId}`;
+    if (window.location.hash === targetHash) {
+      this.route();
+    } else {
+      window.location.hash = targetHash;
+      // Fallback in case browser suppresses or delays hashchange
+      setTimeout(() => {
+        const cur = window.location.hash.replace('#', '') || 'hub';
+        if (cur === viewId && this.currentRoute !== viewId) {
+          this.route();
+        }
+      }, 50);
+    }
   }
 }
 

@@ -304,10 +304,12 @@ export class KatoriCatchGame {
       this.update(dt);
       this.render();
 
-      requestAnimationFrame(loop);
+      if (this.running) {
+        this.animId = requestAnimationFrame(loop);
+      }
     };
 
-    requestAnimationFrame(loop);
+    this.animId = requestAnimationFrame(loop);
   }
 
   update(dt) {
@@ -538,6 +540,7 @@ export class KatoriCatchGame {
   }
 
   handleGameOver(won) {
+    if (!this.running) return;
     this.gameOver = !won;
     this.gameWon = won;
 
@@ -554,6 +557,8 @@ export class KatoriCatchGame {
     const modalCombo = this.container.querySelector('#katoricatch-modal-combo');
     const modalBest = this.container.querySelector('#katoricatch-modal-best');
 
+    if (!modalTitle || !modalScore || !modalIcon) return;
+
     if (won) {
       modalIcon.textContent = '🏆';
       modalTitle.textContent = 'ALL 40 BANKED!';
@@ -567,15 +572,19 @@ export class KatoriCatchGame {
     }
 
     modalScore.textContent = this.score;
-    modalBanked.textContent = `${this.state.caught} / ${this.state.goal}`;
-    modalCombo.textContent = `${this.bestChain}×`;
-    modalBest.textContent = this.highScore;
+    if (modalBanked) modalBanked.textContent = `${this.state.caught} / ${this.state.goal}`;
+    if (modalCombo) modalCombo.textContent = `${this.bestChain}×`;
+    if (modalBest) modalBest.textContent = this.highScore;
 
-    this.modalEl.classList.remove('hidden');
+    if (this.modalEl) this.modalEl.classList.remove('hidden');
   }
 
   destroy() {
     this.running = false;
+    if (this.animId) {
+      cancelAnimationFrame(this.animId);
+      this.animId = null;
+    }
     window.removeEventListener('keydown', this.boundKeyDown);
     window.removeEventListener('keyup', this.boundKeyUp);
     window.removeEventListener('mousemove', this.boundMouseMove);
