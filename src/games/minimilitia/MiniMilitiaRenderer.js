@@ -136,7 +136,7 @@ export class MiniMilitiaRenderer {
       }
     }
 
-    // 8b. Render Remote Players (Online Multiplayer or Local 2P)
+    // 8b. Render Remote Players (Online Multiplayer)
     if (state.remotePlayers) {
       for (const rp of state.remotePlayers) {
         if (!rp.isDead) {
@@ -620,8 +620,8 @@ export class MiniMilitiaRenderer {
     const redBoxX = baseW / 2 + 45;
     const redBoxY = 18;
 
-    // Multiplayer Names Tag
-    if (state.playType === 'online' || state.playType === 'local') {
+    // Multiplayer Names Tag (Online 1v1)
+    if (state.playType === 'online') {
       ctx.font = 'bold 11px Arial';
       ctx.textAlign = 'center';
       ctx.fillStyle = '#60a5fa';

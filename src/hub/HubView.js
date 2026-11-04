@@ -409,7 +409,7 @@ export class HubView {
             </div>
             <div class="card-content">
               <h2 class="card-title">Mini Militia</h2>
-              <p class="card-desc">Jetpack airborne combat in authentic Doodle Army 2 style! Play Single Player vs AI bots, host 1v1 Online private rooms, or battle a friend in Local 2-Player.</p>
+              <p class="card-desc">Jetpack airborne combat in authentic Doodle Army 2 style! Play Single Player vs AI bots or host 1v1 Online private rooms with friends.</p>
               <div class="card-footer">
                 <span class="card-tag">Best: ${miniMilitiaBest} pts</span>
                 <button class="card-play-btn">
