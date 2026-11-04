@@ -1,17 +1,18 @@
-// MiniMilitiaBot.js - Intelligent Combat AI Opponent
+// MiniMilitiaBot.js - Intelligent Combat AI Opponent with Outpost Navigation
 export class MiniMilitiaBot {
-  constructor(id, name, startX, startY) {
+  constructor(id, name, startX, startY, color = '#ef4444') {
     this.id = id;
     this.name = name;
     this.x = startX;
     this.y = startY;
-    this.width = 50;
-    this.height = 70;
+    this.color = color;
+    this.width = 46;
+    this.height = 64;
 
     this.velocityX = 0;
     this.velocityY = 0;
     this.speed = 3.6;
-    this.gravity = 0.75;
+    this.gravity = 0.72;
     this.onGround = false;
 
     this.health = 100;
@@ -57,9 +58,9 @@ export class MiniMilitiaBot {
       this.reloadTimer = currentTime + 3500;
     }
 
-    // AI Decision Making (every 200ms)
+    // AI Decision Making (every 180ms)
     this.decisionTimer += 16;
-    if (this.decisionTimer > 200) {
+    if (this.decisionTimer > 180) {
       this.decisionTimer = 0;
       this.evaluateTactics(targetPlayer);
     }
@@ -68,27 +69,27 @@ export class MiniMilitiaBot {
     this.executeMovement(physics, targetPlayer);
 
     // Aim & Shooting
-    if (!targetPlayer.isDead) {
+    if (targetPlayer && !targetPlayer.isDead) {
       const centerX = this.x + this.width / 2;
       const centerY = this.y + this.height / 2;
       const targetCenterX = targetPlayer.x + targetPlayer.width / 2;
       const targetCenterY = targetPlayer.y + targetPlayer.height / 2;
 
       const directAngle = Math.atan2(targetCenterY - centerY, targetCenterX - centerX);
-      // Smooth aim adjustment with minor natural inaccuracy
+      // Natural aim spread
       const aimSpread = (Math.sin(currentTime * 0.005) * 0.08);
       this.gunAngle = directAngle + aimSpread;
 
       const dist = Math.hypot(targetCenterX - centerX, targetCenterY - centerY);
 
-      // Shoot in tactical bursts if in range (< 850px) and not reloading
-      if (dist < 850 && !this.isReloading && this.ammo > 0) {
-        if (currentTime > this.burstCooldown && currentTime - this.lastShotTime > 140) {
+      // Shoot in tactical bursts if in range (< 800px) and not reloading
+      if (dist < 800 && !this.isReloading && this.ammo > 0) {
+        if (currentTime > this.burstCooldown && currentTime - this.lastShotTime > 135) {
           this.shoot(onBotShoot, currentTime);
           this.burstCount++;
           if (this.burstCount >= 3 + Math.floor(Math.random() * 3)) {
             this.burstCount = 0;
-            this.burstCooldown = currentTime + 600 + Math.random() * 600;
+            this.burstCooldown = currentTime + 550 + Math.random() * 600;
           }
         }
       }
@@ -96,13 +97,13 @@ export class MiniMilitiaBot {
 
     // Jetpack fuel regeneration
     if (!this.isUsingJetpack && this.jetpackFuel < 100) {
-      this.jetpackFuel = Math.min(100, this.jetpackFuel + 0.35);
+      this.jetpackFuel = Math.min(100, this.jetpackFuel + 0.38);
     }
 
     // Walking animation cycle
     if (Math.abs(this.velocityX) > 0.5) {
       this.walkTimer += 16;
-      if (this.walkTimer > 100) {
+      if (this.walkTimer > 90) {
         this.walkTimer = 0;
         this.walkFrame = (this.walkFrame + 1) % 4;
       }
@@ -112,7 +113,7 @@ export class MiniMilitiaBot {
   }
 
   evaluateTactics(player) {
-    if (player.isDead) {
+    if (!player || player.isDead) {
       this.targetAction = 'patrol';
       return;
     }
@@ -120,11 +121,10 @@ export class MiniMilitiaBot {
     const dist = Math.hypot(player.x - this.x, player.y - this.y);
 
     if (this.health < 30 || this.isReloading) {
-      // Retreat / evasive jetpack flight
       this.targetAction = 'retreat';
-    } else if (dist > 500) {
+    } else if (dist > 450) {
       this.targetAction = 'approach';
-    } else if (dist < 180) {
+    } else if (dist < 160) {
       this.targetAction = 'backstep';
     } else {
       this.targetAction = 'strafe';
@@ -135,20 +135,20 @@ export class MiniMilitiaBot {
     let desiredVelX = 0;
     let wantsJetpack = false;
 
-    const diffX = player.x - this.x;
-    const diffY = player.y - this.y;
+    const diffX = player ? player.x - this.x : 0;
+    const diffY = player ? player.y - this.y : 0;
 
     switch (this.targetAction) {
       case 'approach':
         desiredVelX = diffX > 0 ? this.speed : -this.speed;
-        if (diffY < -40 || (Math.abs(diffX) > 100 && this.onGround && Math.random() < 0.08)) {
+        if (diffY < -35 || (Math.abs(diffX) > 80 && this.onGround && Math.random() < 0.08)) {
           wantsJetpack = true;
         }
         break;
 
       case 'retreat':
         desiredVelX = diffX > 0 ? -this.speed : this.speed;
-        wantsJetpack = true; // Fly away to higher ground
+        wantsJetpack = true;
         break;
 
       case 'backstep':
@@ -156,9 +156,8 @@ export class MiniMilitiaBot {
         break;
 
       case 'strafe':
-        // Jiggle strafe back and forth
         desiredVelX = Math.sin(Date.now() * 0.003) > 0 ? this.speed : -this.speed;
-        if (diffY < -60) wantsJetpack = true;
+        if (diffY < -50) wantsJetpack = true;
         break;
 
       case 'patrol':
@@ -167,11 +166,11 @@ export class MiniMilitiaBot {
         break;
     }
 
-    // Avoid running off cliff into abyss (x > 1800)
-    if (this.x > 1750 && desiredVelX > 0) {
+    // Outpost cavern boundaries
+    if (this.x > 1650 && desiredVelX > 0) {
       desiredVelX = -this.speed;
     }
-    if (this.x < 80 && desiredVelX < 0) {
+    if (this.x < 390 && desiredVelX < 0) {
       desiredVelX = this.speed;
     }
 
@@ -180,8 +179,8 @@ export class MiniMilitiaBot {
     // Jetpack physics
     if (wantsJetpack && this.jetpackFuel > 10) {
       this.isUsingJetpack = true;
-      this.velocityY = Math.max(this.velocityY - 0.42, -4.5);
-      this.jetpackFuel = Math.max(0, this.jetpackFuel - 0.38);
+      this.velocityY = Math.max(this.velocityY - 0.45, -5.0);
+      this.jetpackFuel = Math.max(0, this.jetpackFuel - 0.4);
     } else {
       this.isUsingJetpack = false;
       this.velocityY += this.gravity;
@@ -191,10 +190,9 @@ export class MiniMilitiaBot {
     if (!physics.checkCollisionOnX(this.x, this.y, this.width, this.height, this.velocityX)) {
       this.x += this.velocityX;
     } else {
-      // Hit a wall: jump/jetpack over it!
       this.velocityX = 0;
       if (this.jetpackFuel > 15) {
-        this.velocityY = -4.0;
+        this.velocityY = -4.2;
         this.isUsingJetpack = true;
       }
     }
@@ -209,15 +207,12 @@ export class MiniMilitiaBot {
       this.velocityY = 0;
     }
 
-    // Ground level physics
+    // Ground level
     const groundLvl = physics.getGroundLevel(this.x);
     if (this.y + this.height >= groundLvl) {
       this.y = groundLvl - this.height;
       this.velocityY = 0;
       this.onGround = true;
-    } else if (this.y + this.height >= 720) {
-      // Fell into abyss!
-      this.takeDamage(100);
     } else {
       this.onGround = false;
     }

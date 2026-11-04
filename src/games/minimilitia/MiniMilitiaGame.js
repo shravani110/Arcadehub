@@ -1,4 +1,4 @@
-// MiniMilitiaGame.js - Complete 2D Side-Scrolling Combat Shooter with Single Player & Multiplayer
+// MiniMilitiaGame.js - 2D Outpost Combat Shooter with 1, 2, 3, or 4 Players
 import { MiniMilitiaRenderer } from './MiniMilitiaRenderer.js';
 import { MiniMilitiaPhysics } from './MiniMilitiaPhysics.js';
 import { MiniMilitiaBot } from './MiniMilitiaBot.js';
@@ -22,6 +22,9 @@ export class MiniMilitiaGame {
     this.playerLives = 5;
     this.maxLives = 5;
 
+    // Player Count (1, 2, 3, or 4 players)
+    this.playerCount = Math.max(1, Math.min(4, parseInt(localStorage.getItem('mm_player_count') || '2', 10)));
+
     // Online Multiplayer State
     this.isOnlineHost = false;
     this.roomCode = null;
@@ -42,6 +45,7 @@ export class MiniMilitiaGame {
     // Match scores & timer
     this.playerScore = 0;
     this.opponentScore = 0;
+    this.scores = { 1: 0, 2: 0, 3: 0, 4: 0 };
     this.timer = 300; // 5:00 match timer (seconds)
     this.highScore = parseInt(localStorage.getItem('minimilitia_high_score') || '0', 10);
     this.notification = null;
@@ -52,21 +56,21 @@ export class MiniMilitiaGame {
     this.frameCount = 0;
     this.lastFpsUpdate = Date.now();
 
-    // Camera
+    // Camera (2D panning across Outpost world)
     this.cameraX = 0;
     this.cameraY = 0;
 
-    // Player 1 State
+    // Player 1 State (Local Human Soldier)
     this.player = {
       name: this.playerName,
-      x: 350,
-      y: 500,
-      width: 50,
-      height: 70,
+      x: 880,
+      y: 220,
+      width: 46,
+      height: 64,
       velocityX: 0,
       velocityY: 0,
       speed: 4.8,
-      gravity: 0.75,
+      gravity: 0.72,
       health: 100,
       isDead: false,
       respawnTimer: 0,
@@ -85,48 +89,19 @@ export class MiniMilitiaGame {
       onGround: false
     };
 
-    // Opponent Player (used in Online 1v1 mode)
-    this.opponentPlayer = {
-      name: 'Player 2',
-      x: 1450,
-      y: 450,
-      width: 50,
-      height: 70,
-      velocityX: 0,
-      velocityY: 0,
-      speed: 4.8,
-      gravity: 0.75,
-      health: 100,
-      isDead: false,
-      respawnTimer: 0,
-      spawnProtection: 0,
-      jetpackFuel: 100,
-      isUsingJetpack: false,
-      isCrouching: false,
-      ammo: 25,
-      maxAmmo: 25,
-      isReloading: false,
-      reloadTimer: 0,
-      gunAngle: Math.PI,
-      lastShotTime: 0,
-      walkFrame: 0,
-      walkTimer: 0,
-      onGround: false
-    };
+    // Remote Players Map for Online Multiplayer (Slots 2, 3, 4)
+    this.remotePlayers = new Map();
 
-    // Bots / Opponents for Single Player
-    this.bots = [
-      new MiniMilitiaBot('bot_alpha', 'Sgt. Viper', 850, 400),
-      new MiniMilitiaBot('bot_bravo', 'Col. Hunter', 1450, 450)
-    ];
+    // Bots for Single Player
+    this.bots = [];
 
     // Bullets and Particles
     this.bullets = [];
     this.particles = [];
 
     // Aim position in world space
-    this.aimX = 640;
-    this.aimY = 360;
+    this.aimX = 1000;
+    this.aimY = 220;
 
     // Player 1 input state
     this.keys = {
@@ -146,14 +121,29 @@ export class MiniMilitiaGame {
     this.attemptAutoLandscape();
     this.checkOrientation();
 
-    // Initial camera centered on player
-    const { baseW } = this.getBaseViewport();
+    // Center camera on player
+    const { baseW, baseH } = this.getBaseViewport();
     this.cameraX = Math.max(0, Math.min(this.player.x + this.player.width / 2 - baseW / 2, Math.max(0, this.physics.worldWidth - baseW)));
+    this.cameraY = Math.max(0, Math.min(this.player.y + this.player.height / 2 - baseH / 2, Math.max(0, this.physics.worldHeight - baseH)));
 
     this.isRunning = true;
     this.lastTime = Date.now();
     this.loop = this.loop.bind(this);
     requestAnimationFrame(this.loop);
+  }
+
+  getPlayerCountDesc(count) {
+    switch (count) {
+      case 1:
+        return '👤 1 Player: Solo Outpost Scout & Target Practice in the catacombs.';
+      case 2:
+        return '👥 2 Players: 1v1 Tactical Duel across castle battlements and bunkers.';
+      case 3:
+        return '⚔️ 3 Players: 3-Player Triangle Skirmish in intense multi-level crossfire.';
+      case 4:
+      default:
+        return '💥 4 Players: 4-Player Outpost All-Out Mayhem across all 4 sectors!';
+    }
   }
 
   initDOM() {
@@ -190,9 +180,31 @@ export class MiniMilitiaGame {
         <div class="mm-modal-overlay" id="mm-start-overlay">
           <div class="mm-modal-card">
             <div class="mm-modal-header">
-              <span class="mm-modal-badge">2D COMBAT OUTPOST</span>
+              <span class="mm-modal-badge">OUTPOST COMBAT ZONE</span>
               <h1 class="mm-modal-title">MINI MILITIA</h1>
-              <p class="mm-modal-subtitle">Jetpack airborne combat, 360° AK-47 ballistics, and tactical shootouts.</p>
+              <p class="mm-modal-subtitle">Jetpack airborne combat on the legendary Outpost catacombs map!</p>
+            </div>
+
+            <!-- Number of Players Option (1, 2, 3, 4 Players) -->
+            <div class="mm-count-section">
+              <div class="mm-count-label">SELECT COMBATANTS (1 - 4 PLAYERS)</div>
+              <div class="mm-count-buttons">
+                <button class="mm-count-btn ${this.playerCount === 1 ? 'active' : ''}" data-count="1">
+                  <span class="mm-count-badge">1P</span> SOLO
+                </button>
+                <button class="mm-count-btn ${this.playerCount === 2 ? 'active' : ''}" data-count="2">
+                  <span class="mm-count-badge">2P</span> 1v1
+                </button>
+                <button class="mm-count-btn ${this.playerCount === 3 ? 'active' : ''}" data-count="3">
+                  <span class="mm-count-badge">3P</span> 3 PLAYERS
+                </button>
+                <button class="mm-count-btn ${this.playerCount === 4 ? 'active' : ''}" data-count="4">
+                  <span class="mm-count-badge">4P</span> 4 PLAYERS
+                </button>
+              </div>
+              <div class="mm-count-desc" id="mm-count-desc">
+                ${this.getPlayerCountDesc(this.playerCount)}
+              </div>
             </div>
 
             <!-- Mode Selection Tabs -->
@@ -201,7 +213,7 @@ export class MiniMilitiaGame {
                 🎮 SINGLE PLAYER
               </button>
               <button class="mm-type-tab ${this.playType === 'online' ? 'active' : ''}" id="mm-tab-online" data-tab="online">
-                🌐 ONLINE 1v1
+                🌐 ONLINE MULTIPLAYER
               </button>
             </div>
 
@@ -239,7 +251,7 @@ export class MiniMilitiaGame {
               </div>
 
               <button id="mm-start-btn" class="mm-start-btn">
-                START SINGLE PLAYER
+                START BATTLE (${this.playerCount === 1 ? 'SOLO' : `${this.playerCount} PLAYERS`})
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
               </button>
             </div>
@@ -257,9 +269,9 @@ export class MiniMilitiaGame {
               <div class="mm-online-grid" id="mm-online-choice-view">
                 <div class="mm-online-card">
                   <div class="mm-online-card-title">HOST MATCH</div>
-                  <div class="mm-online-card-desc">Create a private battle room and share the room code or invite link.</div>
+                  <div class="mm-online-card-desc">Host a private Outpost battle room for up to ${this.playerCount} players.</div>
                   <button id="mm-host-room-btn" class="mm-btn-action mm-btn-host">
-                    CREATE ROOM
+                    CREATE ROOM (${this.playerCount}P)
                   </button>
                 </div>
 
@@ -272,16 +284,21 @@ export class MiniMilitiaGame {
                 </div>
               </div>
 
-              <!-- Host Waiting Room Box -->
+              <!-- Host Waiting Room Box with Player Roster -->
               <div class="mm-room-box" id="mm-room-waiting-box" style="display: none;">
                 <div class="mm-room-code-tag">ROOM CODE</div>
                 <div class="mm-room-code-val" id="mm-display-room-code">----</div>
                 <div class="mm-room-status">
                   <span class="mm-pulse-dot"></span>
-                  <span id="mm-waiting-status-text">Waiting for opponent to connect...</span>
+                  <span id="mm-waiting-status-text">Waiting for players to connect...</span>
                 </div>
-                <div style="display: flex; gap: 8px; margin-top: 4px;">
+
+                <!-- Connected Roster -->
+                <div id="mm-roster-list" class="mm-roster-list"></div>
+
+                <div style="display: flex; gap: 8px; margin-top: 6px; justify-content: center;">
                   <button id="mm-copy-link-btn" class="mm-btn-copy">📋 Copy Invite Link</button>
+                  <button id="mm-start-room-btn" class="mm-btn-action mm-btn-host" style="display: none; padding: 6px 14px; font-size: 12px;">LAUNCH MATCH ▶</button>
                   <button id="mm-cancel-host-btn" class="mm-btn-copy" style="background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4);">Cancel</button>
                 </div>
               </div>
@@ -299,7 +316,8 @@ export class MiniMilitiaGame {
               <p class="mm-modal-subtitle" id="mm-gameover-desc">The battlefield has cleared.</p>
             </div>
 
-            <div class="mm-gameover-stats">
+            <!-- Leaderboard / Stats Grid -->
+            <div class="mm-gameover-stats" id="mm-gameover-stats-grid">
               <div class="mm-stat-box blue-stat">
                 <div class="stat-label" id="mm-stat-lbl-p1">YOUR KILLS</div>
                 <div class="stat-val" id="mm-stat-player">0</div>
@@ -339,22 +357,16 @@ export class MiniMilitiaGame {
         <!-- Mobile & Tablet Mandatory Horizontal Orientation Overlay -->
         <div class="mm-rotate-overlay" id="mm-rotate-overlay">
           <div class="mm-rotate-card">
-            <div class="mm-phone-anim">
-              <div class="mm-phone-silhouette">
-                <div class="mm-phone-screen-inner"></div>
-              </div>
-              <div class="mm-rotate-icon">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-                </svg>
-              </div>
+            <div class="mm-rotate-icon">
+              <svg width="68" height="68" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="5" width="20" height="14" rx="3"/>
+                <path d="M7 2v3m10-3v3m-10 14v3m10-3v3"/>
+              </svg>
             </div>
-            <span class="mm-modal-badge">MOBILE & TABLET MODE</span>
             <h2 class="mm-rotate-title">ROTATE TO LANDSCAPE</h2>
-            <p class="mm-rotate-subtitle">Mini Militia is designed for horizontal play. Please hold your phone or tablet horizontally to start fighting.</p>
-            <button id="mm-rotate-btn" class="mm-start-btn">
-              PLAY HORIZONTALLY
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="1"/></svg>
+            <p class="mm-rotate-desc">Mini Militia requires horizontal landscape mode for full 360° tactical combat & radar vision.</p>
+            <button id="mm-rotate-btn" class="mm-rotate-btn">
+              <span>🔄 LOCK LANDSCAPE & PLAY</span>
             </button>
           </div>
         </div>
@@ -366,13 +378,9 @@ export class MiniMilitiaGame {
   }
 
   initEvents() {
-    // Navigation Back to Hub
+    // Back to Arcade Hub
     this.container.querySelector('#mm-back-btn')?.addEventListener('click', () => {
-      this.destroy();
-      if (this.onExit) this.onExit();
-    });
-
-    this.container.querySelector('#mm-lobby-btn')?.addEventListener('click', () => {
+      soundManager.playClick();
       this.destroy();
       if (this.onExit) this.onExit();
     });
@@ -380,17 +388,16 @@ export class MiniMilitiaGame {
     // Sound toggle
     const soundBtn = this.container.querySelector('#mm-sound-btn');
     soundBtn?.addEventListener('click', () => {
+      soundManager.playClick();
       const muted = soundManager.toggleMute();
-      if (muted) {
-        this.audio.stopJetpack();
-        soundBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>';
-      } else {
-        soundBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.08"/></svg>';
-      }
+      soundBtn.innerHTML = muted
+        ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>'
+        : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.08"/></svg>';
     });
 
     // Fullscreen toggle
     this.container.querySelector('#mm-fullscreen-btn')?.addEventListener('click', () => {
+      soundManager.playClick();
       if (!document.fullscreenElement) {
         this.container.requestFullscreen?.().catch(() => {});
       } else {
@@ -398,7 +405,32 @@ export class MiniMilitiaGame {
       }
     });
 
-    // Tab Switching: Single Player vs Online 1v1
+    // Player Count Selector (1, 2, 3, 4 Players)
+    const countBtns = this.container.querySelectorAll('.mm-count-btn');
+    countBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        soundManager.playClick();
+        const count = parseInt(btn.dataset.count, 10);
+        this.playerCount = count;
+        localStorage.setItem('mm_player_count', count);
+
+        countBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const descEl = this.container.querySelector('#mm-count-desc');
+        if (descEl) descEl.textContent = this.getPlayerCountDesc(count);
+
+        const startBtn = this.container.querySelector('#mm-start-btn');
+        if (startBtn) {
+          startBtn.innerHTML = `START BATTLE (${count === 1 ? 'SOLO' : `${count} PLAYERS`}) <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
+        }
+
+        const hostBtn = this.container.querySelector('#mm-host-room-btn');
+        if (hostBtn) hostBtn.textContent = `CREATE ROOM (${count}P)`;
+      });
+    });
+
+    // Tab Switching: Single Player vs Online Multiplayer
     const tabs = this.container.querySelectorAll('.mm-type-tab');
     tabs.forEach(tab => {
       tab.addEventListener('click', () => {
@@ -463,10 +495,7 @@ export class MiniMilitiaGame {
         this.joinOnlineRoom(code);
       } else {
         const statusEl = this.container.querySelector('#mm-online-status');
-        if (statusEl) {
-          statusEl.textContent = 'Please enter a valid 4-letter room code!';
-          statusEl.style.color = '#ef4444';
-        }
+        if (statusEl) statusEl.textContent = 'Please enter a 4-letter Room Code';
       }
     });
 
@@ -476,25 +505,39 @@ export class MiniMilitiaGame {
       this.copyInviteLink();
     });
 
+    // Online Multiplayer: Launch Room Match Button (Host manual start)
+    this.container.querySelector('#mm-start-room-btn')?.addEventListener('click', () => {
+      soundManager.playClick();
+      this.network.sendMatchEvent('start');
+      this.startMatch('online');
+    });
+
     // Online Multiplayer: Cancel Host Button
     this.container.querySelector('#mm-cancel-host-btn')?.addEventListener('click', () => {
       soundManager.playClick();
       this.network.destroy();
       const choiceView = this.container.querySelector('#mm-online-choice-view');
-      const waitingBox = this.container.querySelector('#mm-room-waiting-box');
+      const waitBox = this.container.querySelector('#mm-room-waiting-box');
       if (choiceView) choiceView.style.display = 'grid';
-      if (waitingBox) waitingBox.style.display = 'none';
-      const statusEl = this.container.querySelector('#mm-online-status');
-      if (statusEl) statusEl.textContent = '';
+      if (waitBox) waitBox.style.display = 'none';
     });
 
-    // PLAY AGAIN button
+    // Game Over Buttons
     this.container.querySelector('#mm-playagain-btn')?.addEventListener('click', () => {
       soundManager.playClick();
-      if (this.playType === 'online' && this.network.isConnected) {
+      if (this.playType === 'online' && this.isOnlineHost) {
         this.network.sendMatchEvent('restart');
       }
       this.startMatch(this.playType);
+    });
+
+    this.container.querySelector('#mm-lobby-btn')?.addEventListener('click', () => {
+      soundManager.playClick();
+      const gameOverOverlay = this.container.querySelector('#mm-gameover-overlay');
+      const startOverlay = this.container.querySelector('#mm-start-overlay');
+      if (gameOverOverlay) gameOverOverlay.style.display = 'none';
+      if (startOverlay) startOverlay.style.display = 'flex';
+      this.gameState = 'start';
     });
 
     // Rotate to Landscape button
@@ -542,43 +585,67 @@ export class MiniMilitiaGame {
   }
 
   setupNetworkHandlers() {
-    this.network.onConnected = ({ isHost, roomCode }) => {
+    this.network.onConnected = ({ isHost, roomCode, slot }) => {
       this.isOnlineHost = isHost;
       this.roomCode = roomCode;
-      this.opponentName = this.network.opponentName || 'Opponent';
-      this.opponentPlayer.name = this.opponentName;
-      this.showNotification(`⚔️ OPPONENT CONNECTED: ${this.opponentName.toUpperCase()}!`);
+      this.showNotification(`⚔️ CONNECTED TO OUTPOST ROOM ${roomCode}!`);
       soundManager.playClick();
-
-      const waitingStatus = this.container.querySelector('#mm-waiting-status-text');
-      if (waitingStatus) {
-        waitingStatus.textContent = 'Opponent connected! Launching duel...';
-      }
-
-      setTimeout(() => {
-        this.startMatch('online');
-      }, 600);
     };
 
-    this.network.onOpponentState = (state) => {
-      if (!this.opponentPlayer) return;
-      this.opponentPlayer.x = state.x;
-      this.opponentPlayer.y = state.y;
-      this.opponentPlayer.velocityX = state.vx;
-      this.opponentPlayer.velocityY = state.vy;
-      this.opponentPlayer.gunAngle = state.gunAngle;
-      this.opponentPlayer.isUsingJetpack = state.isUsingJetpack;
-      this.opponentPlayer.isCrouching = state.isCrouching;
-      this.opponentPlayer.walkFrame = state.walkFrame;
-      this.opponentPlayer.health = state.health;
-      this.opponentPlayer.isDead = state.isDead;
-      this.opponentPlayer.respawnTimer = state.respawnTimer;
-      this.opponentPlayer.lastShotTime = state.lastShotTime;
+    this.network.onPlayerListChange = (players) => {
+      this.updateRosterUI(players);
 
-      // Spawn jetpack thruster particles for opponent
+      // Auto-launch if room reaches selected capacity
+      if (this.isOnlineHost && players.length >= this.playerCount) {
+        this.showNotification(`💥 ROOM FULL (${players.length}/${this.playerCount}) • LAUNCHING!`);
+        setTimeout(() => {
+          this.network.sendMatchEvent('start');
+          this.startMatch('online');
+        }, 1200);
+      }
+    };
+
+    this.network.onRemotePlayerState = (slot, state) => {
+      let rp = this.remotePlayers.get(slot);
+      if (!rp) {
+        const slotColor = this.network.slotColors[slot] || '#ef4444';
+        rp = {
+          slot: slot,
+          name: `Player ${slot}`,
+          color: slotColor,
+          x: state.x,
+          y: state.y,
+          width: 46,
+          height: 64,
+          velocityX: 0,
+          velocityY: 0,
+          health: 100,
+          isDead: false,
+          gunAngle: 0,
+          isUsingJetpack: false,
+          isCrouching: false,
+          walkFrame: 0
+        };
+        this.remotePlayers.set(slot, rp);
+      }
+
+      rp.x = state.x;
+      rp.y = state.y;
+      rp.velocityX = state.vx;
+      rp.velocityY = state.vy;
+      rp.gunAngle = state.gunAngle;
+      rp.isUsingJetpack = state.isUsingJetpack;
+      rp.isCrouching = state.isCrouching;
+      rp.walkFrame = state.walkFrame;
+      rp.health = state.health;
+      rp.isDead = state.isDead;
+      rp.respawnTimer = state.respawnTimer;
+      rp.lastShotTime = state.lastShotTime;
+
+      // Jetpack particles for remote soldier
       if (state.isUsingJetpack) {
-        const cx = state.x + this.opponentPlayer.width / 2;
-        const by = state.y + this.opponentPlayer.height;
+        const cx = state.x + rp.width / 2;
+        const by = state.y + rp.height;
         this.particles.push({
           x: cx + (Math.random() - 0.5) * 12,
           y: by,
@@ -592,7 +659,7 @@ export class MiniMilitiaGame {
       }
     };
 
-    this.network.onOpponentShoot = (bulletData) => {
+    this.network.onRemotePlayerShoot = (slot, bulletData) => {
       this.audio.playShoot(0.65);
       this.bullets.push({
         id: bulletData.id || Math.random().toString(36).substring(2),
@@ -602,37 +669,40 @@ export class MiniMilitiaGame {
         speed: bulletData.speed || 16,
         velocityX: Math.cos(bulletData.angle) * (bulletData.speed || 16),
         velocityY: Math.sin(bulletData.angle) * (bulletData.speed || 16),
-        ownerId: 'opponent',
+        ownerId: `player_${slot}`,
         damage: bulletData.damage || 10,
         createdAt: Date.now(),
         trail: [{ x: bulletData.x, y: bulletData.y }]
       });
     };
 
-    this.network.onOpponentHit = (data) => {
-      if (this.opponentPlayer) {
-        this.opponentPlayer.health = Math.max(0, this.opponentPlayer.health - (data.damage || 10));
+    this.network.onRemotePlayerHit = (data) => {
+      const rp = this.remotePlayers.get(data.slot);
+      if (rp) {
+        rp.health = Math.max(0, rp.health - (data.damage || 10));
         this.audio.playHit();
       }
     };
 
     this.network.onMatchEvent = (event, payload) => {
-      if (event === 'kill') {
-        this.playerScore++;
-        this.showNotification(`YOU ELIMINATED ${this.opponentName.toUpperCase()}! (+1)`);
-        soundManager.playClick();
+      if (event === 'start') {
+        this.startMatch('online');
       } else if (event === 'restart') {
         this.startMatch('online');
+      } else if (event === 'kill') {
+        const killerSlot = payload?.killerSlot || 1;
+        this.scores[killerSlot] = (this.scores[killerSlot] || 0) + 1;
+        if (killerSlot === this.network.playerSlot) {
+          this.playerScore++;
+          this.showNotification(`YOU ELIMINATED AN OPPONENT! (+1)`);
+        } else {
+          this.showNotification(`PLAYER ${killerSlot} SCORED A KILL!`);
+        }
       }
     };
 
     this.network.onDisconnect = () => {
       this.showNotification('⚠️ OPPONENT DISCONNECTED');
-      if (this.gameState === 'playing') {
-        setTimeout(() => {
-          this.endGame('OPPONENT LEFT THE MATCH');
-        }, 1500);
-      }
     };
 
     this.network.onError = (err) => {
@@ -645,32 +715,53 @@ export class MiniMilitiaGame {
     };
   }
 
+  updateRosterUI(players) {
+    const rosterEl = this.container.querySelector('#mm-roster-list');
+    const waitingText = this.container.querySelector('#mm-waiting-status-text');
+    const launchBtn = this.container.querySelector('#mm-start-room-btn');
+    if (!rosterEl) return;
+
+    if (waitingText) {
+      waitingText.textContent = `Connected combatants (${players.length} / ${this.playerCount})`;
+    }
+
+    if (launchBtn && this.isOnlineHost) {
+      launchBtn.style.display = players.length >= 2 ? 'inline-block' : 'none';
+    }
+
+    rosterEl.innerHTML = players.map(p => `
+      <div class="mm-roster-item" style="border-left: 3px solid ${p.color};">
+        <span style="font-weight: 800; color: ${p.color};">P${p.slot}: ${p.name || `Player ${p.slot}`}</span>
+        <span style="font-size: 10px; color: #94a3b8;">${p.isHost ? '👑 HOST' : 'READY ✅'}</span>
+      </div>
+    `).join('');
+  }
+
   createOnlineRoom() {
     const statusEl = this.container.querySelector('#mm-online-status');
     const choiceView = this.container.querySelector('#mm-online-choice-view');
-    const waitingBox = this.container.querySelector('#mm-room-waiting-box');
-    const codeDisplay = this.container.querySelector('#mm-display-room-code');
+    const waitBox = this.container.querySelector('#mm-room-waiting-box');
+    const displayCode = this.container.querySelector('#mm-display-room-code');
 
     if (statusEl) {
-      statusEl.textContent = 'Initializing secure P2P room...';
+      statusEl.textContent = 'Establishing secure WebRTC outpost room...';
       statusEl.style.color = '#59b8eb';
     }
 
     this.network.createRoom(
       this.playerName,
+      this.playerCount,
       (code) => {
         this.roomCode = code;
-        if (codeDisplay) codeDisplay.textContent = code;
+        this.isOnlineHost = true;
         if (choiceView) choiceView.style.display = 'none';
-        if (waitingBox) waitingBox.style.display = 'flex';
-        if (statusEl) {
-          statusEl.textContent = 'Room created! Share room code with your opponent.';
-          statusEl.style.color = '#22c55e';
-        }
+        if (waitBox) waitBox.style.display = 'block';
+        if (displayCode) displayCode.textContent = code;
+        if (statusEl) statusEl.textContent = '';
       },
       (err) => {
         if (statusEl) {
-          statusEl.textContent = `Failed to create room: ${err.message || 'Check connection'}`;
+          statusEl.textContent = `Could not host room: ${err.message || err}`;
           statusEl.style.color = '#ef4444';
         }
       }
@@ -688,14 +779,13 @@ export class MiniMilitiaGame {
       code,
       this.playerName,
       () => {
-        if (statusEl) {
-          statusEl.textContent = 'Connected! Joining battle arena...';
-          statusEl.style.color = '#22c55e';
-        }
+        this.roomCode = code.toUpperCase();
+        this.isOnlineHost = false;
+        if (statusEl) statusEl.textContent = 'Connected! Waiting for host to launch battle...';
       },
       (err) => {
         if (statusEl) {
-          statusEl.textContent = `Could not join room ${code.toUpperCase()}. Ensure host has room open.`;
+          statusEl.textContent = `Failed to join room: ${err.message || 'Room not found or full'}`;
           statusEl.style.color = '#ef4444';
         }
       }
@@ -704,24 +794,12 @@ export class MiniMilitiaGame {
 
   copyInviteLink() {
     if (!this.roomCode) return;
-    const origin = window.location.origin;
-    const path = window.location.pathname;
-    const inviteUrl = `${origin}${path}#minimilitia?room=${this.roomCode}`;
-
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(inviteUrl).then(() => {
-        this.showNotification('📋 INVITE LINK COPIED TO CLIPBOARD!');
-        const copyBtn = this.container.querySelector('#mm-copy-link-btn');
-        if (copyBtn) copyBtn.textContent = '✓ Copied!';
-        setTimeout(() => {
-          if (copyBtn) copyBtn.textContent = '📋 Copy Invite Link';
-        }, 2500);
-      }).catch(() => {
-        prompt('Copy this invite link:', inviteUrl);
-      });
-    } else {
-      prompt('Copy this invite link:', inviteUrl);
-    }
+    const url = `${window.location.origin}${window.location.pathname}#minimilitia?room=${this.roomCode}`;
+    navigator.clipboard?.writeText(url).then(() => {
+      this.showNotification('📋 INVITE LINK COPIED TO CLIPBOARD!');
+    }).catch(() => {
+      prompt('Copy invite link:', url);
+    });
   }
 
   startMatch(playType = 'single') {
@@ -729,17 +807,17 @@ export class MiniMilitiaGame {
     this.gameState = 'playing';
     this.playerScore = 0;
     this.opponentScore = 0;
+    this.scores = { 1: 0, 2: 0, 3: 0, 4: 0 };
     this.timer = 300; // 5:00 minutes
     this.playerLives = this.maxLives;
     this.bullets = [];
     this.particles = [];
 
-    // Reset Player 1 position & state
-    const p1SpawnX = this.playType === 'online' && !this.isOnlineHost ? 1450 : 350;
-    const p1SpawnY = this.playType === 'online' && !this.isOnlineHost ? 450 : 500;
-
-    this.player.x = p1SpawnX;
-    this.player.y = p1SpawnY;
+    // Safe spawn locations on Outpost map based on slot
+    const slot = this.playType === 'online' ? (this.network.playerSlot - 1) : 0;
+    const spawn = this.physics.getSafeSpawn(slot);
+    this.player.x = spawn.x;
+    this.player.y = spawn.y;
     this.player.velocityX = 0;
     this.player.velocityY = 0;
     this.player.health = 100;
@@ -747,40 +825,60 @@ export class MiniMilitiaGame {
     this.player.ammo = this.player.maxAmmo;
     this.player.isReloading = false;
     this.player.isDead = false;
-    this.player.name = this.playerName;
     this.player.spawnProtection = Date.now() + 2500;
 
-    // Reset Opponent / Player 2 State
-    const p2SpawnX = this.playType === 'online' && !this.isOnlineHost ? 350 : 1450;
-    const p2SpawnY = this.playType === 'online' && !this.isOnlineHost ? 500 : 450;
-
-    this.opponentPlayer.x = p2SpawnX;
-    this.opponentPlayer.y = p2SpawnY;
-    this.opponentPlayer.velocityX = 0;
-    this.opponentPlayer.velocityY = 0;
-    this.opponentPlayer.health = 100;
-    this.opponentPlayer.jetpackFuel = 100;
-    this.opponentPlayer.ammo = 25;
-    this.opponentPlayer.isDead = false;
-    this.opponentPlayer.isReloading = false;
-    this.opponentPlayer.name = this.playType === 'online' ? this.opponentName : 'Player 2';
-    this.opponentPlayer.spawnProtection = Date.now() + 2500;
-
-    // Immediately snap camera to player
-    const { baseW } = this.getBaseViewport();
+    // Reset camera to center on player
+    const { baseW, baseH } = this.getBaseViewport();
     this.cameraX = Math.max(0, Math.min(this.player.x + this.player.width / 2 - baseW / 2, Math.max(0, this.physics.worldWidth - baseW)));
-    this.cameraY = 0;
-    this.aimX = this.player.x + this.player.width / 2 + 120;
+    this.cameraY = Math.max(0, Math.min(this.player.y + this.player.height / 2 - baseH / 2, Math.max(0, this.physics.worldHeight - baseH)));
+    this.aimX = this.player.x + this.player.width / 2 + 100;
     this.aimY = this.player.y + this.player.height / 2;
 
-    // Reset bots for single player mode
+    // Configure Single Player Bots according to selected combatants (1, 2, 3, or 4 players)
     if (this.playType === 'single') {
-      this.bots = [
-        new MiniMilitiaBot('bot_alpha', 'Sgt. Viper', 850, 400),
-        new MiniMilitiaBot('bot_bravo', 'Col. Hunter', 1450, 450)
-      ];
+      if (this.playerCount === 1) {
+        this.bots = [];
+      } else if (this.playerCount === 2) {
+        this.bots = [
+          new MiniMilitiaBot('bot_2', 'Sgt. Viper', 1020, 520, '#ef4444')
+        ];
+      } else if (this.playerCount === 3) {
+        this.bots = [
+          new MiniMilitiaBot('bot_2', 'Sgt. Viper', 1020, 520, '#ef4444'),
+          new MiniMilitiaBot('bot_3', 'Col. Hunter', 480, 380, '#22c55e')
+        ];
+      } else {
+        this.bots = [
+          new MiniMilitiaBot('bot_2', 'Sgt. Viper', 1020, 520, '#ef4444'),
+          new MiniMilitiaBot('bot_3', 'Col. Hunter', 480, 380, '#22c55e'),
+          new MiniMilitiaBot('bot_4', 'Major Steel', 1420, 630, '#eab308')
+        ];
+      }
     } else {
       this.bots = [];
+      // Populate remote players
+      for (const p of this.network.players.values()) {
+        if (p.slot !== this.network.playerSlot) {
+          const sp = this.physics.getSafeSpawn(p.slot - 1);
+          this.remotePlayers.set(p.slot, {
+            slot: p.slot,
+            name: p.name,
+            color: p.color,
+            x: sp.x,
+            y: sp.y,
+            width: 46,
+            height: 64,
+            velocityX: 0,
+            velocityY: 0,
+            health: 100,
+            isDead: false,
+            gunAngle: Math.PI,
+            isUsingJetpack: false,
+            isCrouching: false,
+            walkFrame: 0
+          });
+        }
+      }
     }
 
     // Hide start & game over modals
@@ -790,9 +888,11 @@ export class MiniMilitiaGame {
     if (gameOverOverlay) gameOverOverlay.style.display = 'none';
 
     if (this.playType === 'online') {
-      this.showNotification(`⚔️ 1v1 ONLINE DUEL • FIGHT ${this.opponentName.toUpperCase()}!`);
+      this.showNotification(`⚔️ ${this.playerCount}-PLAYER OUTPOST DUEL • ENGAGE!`);
+    } else if (this.playerCount === 1) {
+      this.showNotification('🎯 OUTPOST SOLO TRAINING • SCOUT & PRACTICE!');
     } else {
-      this.showNotification(this.gameMode === 'survival' ? 'SURVIVAL MODE (5 CHANCES) • FIGHT!' : 'TIMED DEATHMATCH • 5:00 ON THE CLOCK!');
+      this.showNotification(`💥 ${this.playerCount}-PLAYER OUTPOST BATTLE • FIGHT!`);
     }
   }
 
@@ -841,7 +941,7 @@ export class MiniMilitiaGame {
 
     const resetLeft = () => {
       leftThumb.style.transform = 'translate(0px, 0px)';
-      leftBase.style.opacity = '0.7';
+      leftBase.style.opacity = '0.5';
       this.keys.left = false;
       this.keys.right = false;
       this.keys.up = false;
@@ -850,7 +950,7 @@ export class MiniMilitiaGame {
     leftZone?.addEventListener('touchend', resetLeft);
     leftZone?.addEventListener('touchcancel', resetLeft);
 
-    // Right Touch Joystick (Aim & Auto-Fire)
+    // Right Touch Joystick (360° Aim & Fire)
     const handleRightTouch = (touch) => {
       const rect = rightZone.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
@@ -866,13 +966,14 @@ export class MiniMilitiaGame {
       const thumbY = Math.sin(angle) * clampedDist;
       rightThumb.style.transform = `translate(${thumbX}px, ${thumbY}px)`;
 
-      // Aim weapon in world space
+      // Aim angle
+      const playerCenterX = this.player.x + this.player.width / 2;
+      const playerCenterY = this.player.y + this.player.height / 2;
       this.player.gunAngle = angle;
-      const aimDist = 200;
-      this.aimX = (this.player.x + this.player.width / 2) + Math.cos(angle) * aimDist;
-      this.aimY = (this.player.y + this.player.height / 2) + Math.sin(angle) * aimDist;
+      this.aimX = playerCenterX + Math.cos(angle) * 140;
+      this.aimY = playerCenterY + Math.sin(angle) * 140;
 
-      // Auto-fire while aiming with joystick
+      // Fire when pulled beyond threshold
       if (dist > 18) {
         this.isShooting = true;
       }
@@ -891,7 +992,7 @@ export class MiniMilitiaGame {
 
     const resetRight = () => {
       rightThumb.style.transform = 'translate(0px, 0px)';
-      rightBase.style.opacity = '0.7';
+      rightBase.style.opacity = '0.5';
       this.isShooting = false;
     };
     rightZone?.addEventListener('touchend', resetRight);
@@ -899,27 +1000,14 @@ export class MiniMilitiaGame {
   }
 
   handleKeyDown(e) {
-    // Player 1 controls (WASD, R, F)
-    if (e.key === 'a' || e.key === 'A') {
-      this.keys.left = true;
-    }
-    if (e.key === 'd' || e.key === 'D') {
-      this.keys.right = true;
-    }
-    if (e.key === 'w' || e.key === 'W' || e.key === ' ') {
-      this.keys.up = true;
-    }
-    if (e.key === 's' || e.key === 'S') {
-      this.keys.crouch = true;
-    }
-    if (e.key === 'r' || e.key === 'R') {
-      this.reload();
-    }
-    if (e.key === 'f' || e.key === 'F') {
-      this.isShooting = true;
-    }
+    if (e.key === 'a' || e.key === 'A') this.keys.left = true;
+    if (e.key === 'd' || e.key === 'D') this.keys.right = true;
+    if (e.key === 'w' || e.key === 'W' || e.key === ' ') this.keys.up = true;
+    if (e.key === 's' || e.key === 'S') this.keys.crouch = true;
+    if (e.key === 'r' || e.key === 'R') this.reload();
+    if (e.key === 'f' || e.key === 'F') this.isShooting = true;
 
-    // Arrow Keys also move Player 1
+    // Arrow keys support
     if (e.key === 'ArrowLeft') this.keys.left = true;
     if (e.key === 'ArrowRight') this.keys.right = true;
     if (e.key === 'ArrowUp') this.keys.up = true;
@@ -927,21 +1015,11 @@ export class MiniMilitiaGame {
   }
 
   handleKeyUp(e) {
-    if (e.key === 'a' || e.key === 'A') {
-      this.keys.left = false;
-    }
-    if (e.key === 'd' || e.key === 'D') {
-      this.keys.right = false;
-    }
-    if (e.key === 'w' || e.key === 'W' || e.key === ' ') {
-      this.keys.up = false;
-    }
-    if (e.key === 's' || e.key === 'S') {
-      this.keys.crouch = false;
-    }
-    if (e.key === 'f' || e.key === 'F') {
-      this.isShooting = false;
-    }
+    if (e.key === 'a' || e.key === 'A') this.keys.left = false;
+    if (e.key === 'd' || e.key === 'D') this.keys.right = false;
+    if (e.key === 'w' || e.key === 'W' || e.key === ' ') this.keys.up = false;
+    if (e.key === 's' || e.key === 'S') this.keys.crouch = false;
+    if (e.key === 'f' || e.key === 'F') this.isShooting = false;
 
     if (e.key === 'ArrowLeft') this.keys.left = false;
     if (e.key === 'ArrowRight') this.keys.right = false;
@@ -962,18 +1040,18 @@ export class MiniMilitiaGame {
     const canvasMouseX = (e.clientX - rect.left - viewOffsetX) / scale;
     const canvasMouseY = (e.clientY - rect.top - viewOffsetY) / scale;
 
-    // Convert screen coordinates to world coordinates
+    // World aim position
     this.aimX = canvasMouseX + this.cameraX;
     this.aimY = canvasMouseY + this.cameraY;
 
-    // Calculate gun angle for Player 1
+    // Player gun angle pointing towards crosshair
     const playerCenterX = this.player.x + this.player.width / 2;
     const playerCenterY = this.player.y + this.player.height / 2;
     this.player.gunAngle = Math.atan2(this.aimY - playerCenterY, this.aimX - playerCenterX);
   }
 
   handleMouseDown(e) {
-    if (e.button === 0 && this.gameState === 'playing') {
+    if (e.button === 0) {
       this.isShooting = true;
     }
   }
@@ -1003,18 +1081,19 @@ export class MiniMilitiaGame {
       if (screen.orientation && screen.orientation.lock) {
         screen.orientation.lock('landscape').catch(() => {});
       }
-    } catch (e) {}
+    } catch (_) {}
   }
 
   checkOrientation() {
     const isPortrait = window.innerHeight > window.innerWidth;
-    const rotateOverlay = this.container.querySelector('#mm-rotate-overlay');
-    if (rotateOverlay) {
-      if (isPortrait) {
-        rotateOverlay.classList.add('active');
-        if (this.audio) this.audio.stopJetpack();
+    const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    const overlay = this.container.querySelector('#mm-rotate-overlay');
+
+    if (overlay) {
+      if (isTouch && isPortrait) {
+        overlay.classList.add('visible');
       } else {
-        rotateOverlay.classList.remove('active');
+        overlay.classList.remove('visible');
       }
     }
   }
@@ -1051,7 +1130,7 @@ export class MiniMilitiaGame {
     this.player.lastShotTime = now;
     this.audio.playShoot();
 
-    // Calculate bullet spawn at gun muzzle
+    // Muzzle position
     const centerX = this.player.x + this.player.width / 2;
     const centerY = this.player.y + this.player.height / 2;
     const spread = (Math.random() - 0.5) * 0.08;
@@ -1061,6 +1140,7 @@ export class MiniMilitiaGame {
     const bulletX = centerX + Math.cos(angle) * gunLength;
     const bulletY = centerY + Math.sin(angle) * gunLength;
 
+    const mySlot = this.playType === 'online' ? this.network.playerSlot : 1;
     const bullet = {
       id: Math.random().toString(36).substring(2),
       x: bulletX,
@@ -1069,7 +1149,7 @@ export class MiniMilitiaGame {
       speed: 16,
       velocityX: Math.cos(angle) * 16,
       velocityY: Math.sin(angle) * 16,
-      ownerId: 'player',
+      ownerId: `player_${mySlot}`,
       damage: 10,
       createdAt: now,
       trail: [{ x: bulletX, y: bulletY }]
@@ -1077,7 +1157,7 @@ export class MiniMilitiaGame {
 
     this.bullets.push(bullet);
 
-    // Broadcast bullet in online multiplayer
+    // Broadcast in online multiplayer
     if (this.playType === 'online' && this.network.isConnected) {
       this.network.sendShoot(bullet);
     }
@@ -1094,7 +1174,7 @@ export class MiniMilitiaGame {
     const dt = Math.min((now - this.lastTime) / 1000, 0.1);
     this.lastTime = now;
 
-    // FPS calculation
+    // FPS
     this.frameCount++;
     if (now - this.lastFpsUpdate >= 1000) {
       this.fps = this.frameCount;
@@ -1103,41 +1183,67 @@ export class MiniMilitiaGame {
     }
 
     if (this.gameState === 'playing') {
-      // Match Timer countdown
+      // Countdown timer
       this.timer = Math.max(0, this.timer - dt);
       if (this.timer <= 0) {
         this.endGame();
       }
 
-      // Update Player 1
+      // Update Local Player
       this.updatePlayer(dt, now);
 
       // Update Bullets & Environment
       this.updateBullets(now);
       this.updateParticles(dt);
 
-      // Update Bots in Single Player
+      // Update Bots (Single Player)
       if (this.playType === 'single') {
         this.updateBots(now);
       }
 
-      // Update Camera Tracking
+      // 2D Camera Tracking across Outpost Map
       this.updateCamera();
     }
 
-    // Notification clear
+    // Clear notifications
     if (this.notification && now > this.notificationTimer) {
       this.notification = null;
     }
 
-    // Render current frame
+    // Build combatants list for HUD
+    const combatants = [
+      { slot: 1, name: this.player.name || 'Soldier #1', color: '#3b82f6', score: this.scores[1] || 0 }
+    ];
+
+    if (this.playType === 'single') {
+      this.bots.forEach((b, idx) => {
+        combatants.push({
+          slot: idx + 2,
+          name: b.name,
+          color: b.color,
+          score: this.scores[idx + 2] || 0
+        });
+      });
+    } else {
+      for (const rp of this.remotePlayers.values()) {
+        combatants.push({
+          slot: rp.slot,
+          name: rp.name,
+          color: rp.color,
+          score: this.scores[rp.slot] || 0
+        });
+      }
+    }
+
+    // Render frame
     this.renderer.render({
       playType: this.playType,
+      playerCount: this.playerCount,
       playerName: this.playerName,
-      opponentName: this.playType === 'online' ? this.opponentName : 'Bots',
+      opponentName: this.opponentName,
       roomCode: this.roomCode,
       player: this.player,
-      remotePlayers: this.playType === 'online' ? [this.opponentPlayer] : [],
+      remotePlayers: Array.from(this.remotePlayers.values()),
       bots: this.playType === 'single' ? this.bots : [],
       bullets: this.bullets,
       particles: this.particles,
@@ -1148,6 +1254,8 @@ export class MiniMilitiaGame {
       aimY: this.aimY,
       playerScore: this.playerScore,
       opponentScore: this.opponentScore,
+      scores: this.scores,
+      combatants: combatants,
       timer: this.timer,
       lives: (this.playType === 'single' && this.gameMode === 'survival') ? this.playerLives : undefined,
       maxLives: this.maxLives,
@@ -1172,11 +1280,11 @@ export class MiniMilitiaGame {
       this.shoot();
     }
 
-    // Reload check
+    // Reload completion
     if (this.player.isReloading && now > this.player.reloadTimer) {
       this.player.ammo = this.player.maxAmmo;
       this.player.isReloading = false;
-      this.showNotification('AK-47 LOADED (25/25)');
+      this.showNotification('RELOAD COMPLETE (25/25)');
     }
 
     // Horizontal Movement
@@ -1184,14 +1292,14 @@ export class MiniMilitiaGame {
     if (this.keys.left) this.player.velocityX = -this.player.speed;
     if (this.keys.right) this.player.velocityX = this.player.speed;
 
-    // Jetpack Logic
+    // Jetpack Flying
     if (this.keys.up && this.player.jetpackFuel > 0) {
       this.player.isUsingJetpack = true;
       this.player.velocityY = Math.max(this.player.velocityY - 0.52, -5.4);
       this.player.jetpackFuel = Math.max(0, this.player.jetpackFuel - 0.45);
       this.audio.startJetpack();
 
-      // Emit Jetpack Thruster Particles
+      // Thruster flame particles
       const centerX = this.player.x + this.player.width / 2;
       const bottomY = this.player.y + this.player.height;
       for (let i = 0; i < 2; i++) {
@@ -1201,7 +1309,7 @@ export class MiniMilitiaGame {
           vx: (Math.random() - 0.5) * 1.5,
           vy: 2.5 + Math.random() * 2.5,
           size: 3 + Math.random() * 3,
-          color: Math.random() > 0.4 ? '#ff9900' : '#ffff00',
+          color: Math.random() > 0.4 ? '#ff5500' : '#ffff00',
           life: 0.35,
           maxLife: 0.35
         });
@@ -1210,16 +1318,14 @@ export class MiniMilitiaGame {
       this.player.isUsingJetpack = false;
       this.audio.stopJetpack();
       this.player.velocityY += this.player.gravity;
-
-      // Fuel Regen
       if (this.player.jetpackFuel < 100) {
         this.player.jetpackFuel = Math.min(100, this.player.jetpackFuel + 0.4);
       }
     }
 
-    // Crouching
+    // Crouch
     this.player.isCrouching = this.keys.crouch;
-    this.player.height = this.player.isCrouching ? 50 : 70;
+    this.player.height = this.player.isCrouching ? 46 : 64;
 
     // Horizontal Collision
     if (!this.physics.checkCollisionOnX(this.player.x, this.player.y, this.player.width, this.player.height, this.player.velocityX)) {
@@ -1238,7 +1344,7 @@ export class MiniMilitiaGame {
       this.player.velocityY = 0;
     }
 
-    // Ground Level
+    // Ground Bedrock Check
     const groundLvl = this.physics.getGroundLevel(this.player.x);
     if (this.player.y + this.player.height >= groundLvl) {
       this.player.y = groundLvl - this.player.height;
@@ -1248,7 +1354,7 @@ export class MiniMilitiaGame {
       this.player.onGround = false;
     }
 
-    // Walk animation frame update
+    // Walk Animation
     if (Math.abs(this.player.velocityX) > 0.5) {
       this.player.walkTimer += 16;
       if (this.player.walkTimer > 90) {
@@ -1265,7 +1371,51 @@ export class MiniMilitiaGame {
     }
   }
 
+  updateBots(now) {
+    for (const bot of this.bots) {
+      if (bot.isDead) {
+        if (now > bot.respawnTimer) {
+          bot.respawn(this.physics);
+        }
+        continue;
+      }
+
+      // Tactical Target: find nearest alive combatant (player or other bot)
+      let closestTarget = !this.player.isDead ? this.player : null;
+      let closestDist = closestTarget ? Math.hypot(this.player.x - bot.x, this.player.y - bot.y) : Infinity;
+
+      for (const otherBot of this.bots) {
+        if (otherBot.id !== bot.id && !otherBot.isDead) {
+          const d = Math.hypot(otherBot.x - bot.x, otherBot.y - bot.y);
+          if (d < closestDist) {
+            closestDist = d;
+            closestTarget = otherBot;
+          }
+        }
+      }
+
+      bot.update(this.physics, closestTarget, now, (bulletData) => {
+        this.audio.playShoot(0.65);
+        this.bullets.push({
+          id: Math.random().toString(36).substring(2),
+          x: bulletData.x,
+          y: bulletData.y,
+          angle: bulletData.angle,
+          speed: 16,
+          velocityX: Math.cos(bulletData.angle) * 16,
+          velocityY: Math.sin(bulletData.angle) * 16,
+          ownerId: bot.id,
+          damage: 10,
+          createdAt: now,
+          trail: [{ x: bulletData.x, y: bulletData.y }]
+        });
+      });
+    }
+  }
+
   updateBullets(now) {
+    const myId = `player_${this.playType === 'online' ? this.network.playerSlot : 1}`;
+
     for (let i = this.bullets.length - 1; i >= 0; i--) {
       const b = this.bullets[i];
       b.x += b.velocityX;
@@ -1274,15 +1424,15 @@ export class MiniMilitiaGame {
       b.trail.push({ x: b.x, y: b.y });
       if (b.trail.length > 5) b.trail.shift();
 
-      // Environment collision (obstacles and ground)
+      // Environment collision (obstacles, rocks, castle walls)
       if (this.physics.checkBulletCollision(b.x, b.y)) {
         this.spawnImpactSparks(b.x, b.y, '#ffd700');
         this.bullets.splice(i, 1);
         continue;
       }
 
-      // Check hit against Player 1
-      if (b.ownerId !== 'player' && !this.player.isDead) {
+      // Check hit against Local Player
+      if (b.ownerId !== myId && !this.player.isDead) {
         if (
           b.x >= this.player.x &&
           b.x <= this.player.x + this.player.width &&
@@ -1296,25 +1446,11 @@ export class MiniMilitiaGame {
         }
       }
 
-      // Check hit against OpponentPlayer (in Online mode)
-      if (this.playType === 'online' && b.ownerId !== 'opponent' && !this.opponentPlayer.isDead) {
-        if (
-          b.x >= this.opponentPlayer.x &&
-          b.x <= this.opponentPlayer.x + this.opponentPlayer.width &&
-          b.y >= this.opponentPlayer.y &&
-          b.y <= this.opponentPlayer.y + this.opponentPlayer.height
-        ) {
-          this.spawnImpactSparks(b.x, b.y, '#ef4444');
-          this.audio.playHit();
-          this.bullets.splice(i, 1);
-          continue;
-        }
-      }
-
-      // Check hit against bots (in Single Player mode)
+      // Check hit against Bots (Single Player)
       if (this.playType === 'single') {
         let hitBot = false;
-        for (const bot of this.bots) {
+        for (let bi = 0; bi < this.bots.length; bi++) {
+          const bot = this.bots[bi];
           if (b.ownerId !== bot.id && !bot.isDead) {
             if (
               b.x >= bot.x &&
@@ -1322,21 +1458,49 @@ export class MiniMilitiaGame {
               b.y >= bot.y &&
               b.y <= bot.y + bot.height
             ) {
-              this.spawnImpactSparks(b.x, b.y, '#ff4444');
-              bot.takeDamage(b.damage);
+              hitBot = true;
+              this.spawnImpactSparks(b.x, b.y, '#ef4444');
               this.audio.playHit();
+              bot.takeDamage(b.damage);
 
               if (bot.isDead) {
-                this.playerScore++;
-                this.showNotification(`ELIMINATED ${bot.name.toUpperCase()}! (+1)`);
-                if (this.playerScore > this.highScore) {
-                  this.highScore = this.playerScore;
-                  localStorage.setItem('minimilitia_high_score', this.highScore);
+                this.audio.playExplosion();
+                // Determine killer
+                if (b.ownerId === myId) {
+                  this.playerScore++;
+                  this.scores[1] = (this.scores[1] || 0) + 1;
+                  this.showNotification(`YOU ELIMINATED ${bot.name.toUpperCase()}! (+1)`);
+                  if (this.playerScore > this.highScore) {
+                    this.highScore = this.playerScore;
+                    localStorage.setItem('minimilitia_high_score', this.highScore);
+                  }
+                } else {
+                  const killerBot = this.bots.find(kb => kb.id === b.ownerId);
+                  const killerSlot = bi + 2;
+                  this.scores[killerSlot] = (this.scores[killerSlot] || 0) + 1;
+                  this.showNotification(`${killerBot?.name?.toUpperCase() || 'ENEMY'} ELIMINATED ${bot.name.toUpperCase()}!`);
+                }
+
+                // Explosion particles
+                const cx = bot.x + bot.width / 2;
+                const cy = bot.y + bot.height / 2;
+                for (let k = 0; k < 18; k++) {
+                  const angle = Math.random() * Math.PI * 2;
+                  const spd = 2 + Math.random() * 4.5;
+                  this.particles.push({
+                    x: cx,
+                    y: cy,
+                    vx: Math.cos(angle) * spd,
+                    vy: Math.sin(angle) * spd,
+                    size: 3 + Math.random() * 3.5,
+                    color: Math.random() > 0.5 ? '#ef4444' : '#ff9900',
+                    life: 0.55,
+                    maxLife: 0.55
+                  });
                 }
               }
 
               this.bullets.splice(i, 1);
-              hitBot = true;
               break;
             }
           }
@@ -1344,99 +1508,54 @@ export class MiniMilitiaGame {
         if (hitBot) continue;
       }
 
-      // Lifetime timeout (4 seconds)
-      if (now - b.createdAt > 4000) {
+      // Check hit against Remote Players (Online Multiplayer)
+      if (this.playType === 'online') {
+        let hitRemote = false;
+        for (const rp of this.remotePlayers.values()) {
+          const rpId = `player_${rp.slot}`;
+          if (b.ownerId !== rpId && !rp.isDead) {
+            if (
+              b.x >= rp.x &&
+              b.x <= rp.x + rp.width &&
+              b.y >= rp.y &&
+              b.y <= rp.y + rp.height
+            ) {
+              hitRemote = true;
+              this.spawnImpactSparks(b.x, b.y, '#ef4444');
+              this.audio.playHit();
+
+              if (b.ownerId === myId) {
+                // Host registers hit
+                this.network.sendHit(b.damage, myId);
+              }
+              this.bullets.splice(i, 1);
+              break;
+            }
+          }
+        }
+        if (hitRemote) continue;
+      }
+
+      // Bullet lifetime timeout (2.8s)
+      if (now - b.createdAt > 2800) {
         this.bullets.splice(i, 1);
       }
     }
   }
 
-  updateParticles(dt) {
-    for (let i = this.particles.length - 1; i >= 0; i--) {
-      const p = this.particles[i];
-      p.x += p.vx;
-      p.y += p.vy;
-      p.life -= dt;
-      if (p.life <= 0) {
-        this.particles.splice(i, 1);
-      }
-    }
-  }
-
-  updateBots(now) {
-    for (const bot of this.bots) {
-      bot.update(this.physics, this.player, now, (bulletData) => {
-        this.audio.playShoot(0.35); // Distant gunshot sound
-        this.bullets.push({
-          id: Math.random().toString(36).substring(2),
-          x: bulletData.x,
-          y: bulletData.y,
-          angle: bulletData.angle,
-          speed: 15,
-          velocityX: Math.cos(bulletData.angle) * 15,
-          velocityY: Math.sin(bulletData.angle) * 15,
-          ownerId: bulletData.ownerId,
-          damage: bulletData.damage,
-          createdAt: now,
-          trail: [{ x: bulletData.x, y: bulletData.y }]
-        });
-      });
-    }
-  }
-
-  updateCamera() {
-    const { baseW } = this.getBaseViewport();
-    const targetCamX = this.player.x + this.player.width / 2 - baseW / 2;
-    this.cameraX += (targetCamX - this.cameraX) * 0.12;
-
-    // Clamp within world bounds
-    this.cameraX = Math.max(0, Math.min(this.cameraX, Math.max(0, this.physics.worldWidth - baseW)));
-    this.cameraY = 0;
-  }
-
-  spawnImpactSparks(x, y, color) {
-    for (let i = 0; i < 7; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const spd = 1.5 + Math.random() * 3.5;
-      this.particles.push({
-        x: x,
-        y: y,
-        vx: Math.cos(angle) * spd,
-        vy: Math.sin(angle) * spd,
-        size: 2.2 + Math.random() * 2,
-        color: color,
-        life: 0.25 + Math.random() * 0.2,
-        maxLife: 0.4
-      });
-    }
-  }
-
-  takePlayerDamage(damage, attacker) {
+  takePlayerDamage(damage, attackerId) {
     if (this.player.isDead) return;
     if (this.player.spawnProtection && Date.now() < this.player.spawnProtection) return;
 
     this.player.health = Math.max(0, this.player.health - damage);
     this.audio.playHit();
 
-    // Inform opponent in online match
-    if (this.playType === 'online' && this.network.isConnected) {
-      this.network.sendHit(damage, 'player');
-    }
-
     if (this.player.health <= 0) {
       this.player.isDead = true;
       this.opponentScore++;
       this.audio.playExplosion();
 
-      // Tell opponent in online match
-      if (this.playType === 'online' && this.network.isConnected) {
-        this.network.sendMatchEvent('kill', {
-          killer: this.opponentName,
-          victim: this.playerName
-        });
-      }
-
-      // Check survival mode lives/chances
+      // Check survival chances mode
       if (this.playType === 'single' && this.gameMode === 'survival') {
         this.playerLives--;
         if (this.playerLives <= 0) {
@@ -1446,8 +1565,7 @@ export class MiniMilitiaGame {
       }
 
       this.player.respawnTimer = Date.now() + 3000;
-      const killerName = this.playType === 'online' ? this.opponentName : 'ENEMY';
-      this.showNotification(`ELIMINATED BY ${killerName.toUpperCase()}! RESPAWNING...`);
+      this.showNotification(`ELIMINATED! RESPAWNING IN 3 SECONDS...`);
 
       // Death explosion particles
       const centerX = this.player.x + this.player.width / 2;
@@ -1470,7 +1588,8 @@ export class MiniMilitiaGame {
   }
 
   respawnPlayer() {
-    const spawn = this.physics.getSafeSpawn();
+    const slot = this.playType === 'online' ? (this.network.playerSlot - 1) : 0;
+    const spawn = this.physics.getSafeSpawn(slot);
     this.player.x = spawn.x;
     this.player.y = spawn.y;
     this.player.velocityX = 0;
@@ -1480,15 +1599,58 @@ export class MiniMilitiaGame {
     this.player.ammo = this.player.maxAmmo;
     this.player.isReloading = false;
     this.player.isDead = false;
-    this.player.spawnProtection = Date.now() + 2000; // 2s spawn invulnerability aura
+    this.player.spawnProtection = Date.now() + 2500;
 
-    // Snap camera directly to player
-    const { baseW } = this.getBaseViewport();
+    // Snap camera smoothly to player
+    const { baseW, baseH } = this.getBaseViewport();
     this.cameraX = Math.max(0, Math.min(this.player.x + this.player.width / 2 - baseW / 2, Math.max(0, this.physics.worldWidth - baseW)));
+    this.cameraY = Math.max(0, Math.min(this.player.y + this.player.height / 2 - baseH / 2, Math.max(0, this.physics.worldHeight - baseH)));
     this.aimX = this.player.x + this.player.width / 2 + 100;
     this.aimY = this.player.y + this.player.height / 2;
 
     this.showNotification('RESPAWNED & PROTECTED!');
+  }
+
+  updateCamera() {
+    const { baseW, baseH } = this.getBaseViewport();
+    const targetCamX = this.player.x + this.player.width / 2 - baseW / 2;
+    const targetCamY = this.player.y + this.player.height / 2 - baseH / 2;
+
+    this.cameraX += (targetCamX - this.cameraX) * 0.12;
+    this.cameraY += (targetCamY - this.cameraY) * 0.12;
+
+    // Clamp within 2048 x 1070 Outpost bounds
+    this.cameraX = Math.max(0, Math.min(this.cameraX, Math.max(0, this.physics.worldWidth - baseW)));
+    this.cameraY = Math.max(0, Math.min(this.cameraY, Math.max(0, this.physics.worldHeight - baseH)));
+  }
+
+  spawnImpactSparks(x, y, color) {
+    for (let i = 0; i < 7; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const spd = 1.5 + Math.random() * 3.5;
+      this.particles.push({
+        x: x,
+        y: y,
+        vx: Math.cos(angle) * spd,
+        vy: Math.sin(angle) * spd,
+        size: 2.2 + Math.random() * 2,
+        color: color,
+        life: 0.28,
+        maxLife: 0.28
+      });
+    }
+  }
+
+  updateParticles(dt) {
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life -= dt;
+      if (p.life <= 0) {
+        this.particles.splice(i, 1);
+      }
+    }
   }
 
   endGame(customReason) {
@@ -1499,25 +1661,23 @@ export class MiniMilitiaGame {
     const descEl = this.container.querySelector('#mm-gameover-desc');
     const playerStatEl = this.container.querySelector('#mm-stat-player');
     const enemyStatEl = this.container.querySelector('#mm-stat-enemy');
-    const p1LabelEl = this.container.querySelector('#mm-stat-lbl-p1');
-    const p2LabelEl = this.container.querySelector('#mm-stat-lbl-p2');
     const overlayEl = this.container.querySelector('#mm-gameover-overlay');
-
-    if (p1LabelEl) p1LabelEl.textContent = 'YOUR KILLS';
-    if (p2LabelEl) p2LabelEl.textContent = (this.playType === 'online' ? this.opponentName.toUpperCase() : 'ENEMY KILLS');
 
     if (customReason) {
       if (titleEl) titleEl.textContent = 'MATCH OVER';
       if (descEl) descEl.textContent = customReason;
+    } else if (this.playerCount === 1) {
+      if (titleEl) titleEl.textContent = 'SCOUT COMPLETE!';
+      if (descEl) descEl.textContent = 'Outpost sector reconnaissance and weapon training completed.';
     } else if (this.playerScore > this.opponentScore) {
-      if (titleEl) titleEl.textContent = '🏆 VICTORY!';
-      if (descEl) descEl.textContent = `${this.player.name || 'Blue Soldier'} has dominated the battlefield!`;
+      if (titleEl) titleEl.textContent = '🏆 OUTPOST VICTORY!';
+      if (descEl) descEl.textContent = `${this.player.name || 'Commander'} has conquered the Outpost!`;
     } else if (this.playerScore < this.opponentScore) {
       if (titleEl) titleEl.textContent = '💀 DEFEAT!';
-      if (descEl) descEl.textContent = `${this.opponentPlayer.name || 'Red Soldier'} took victory!`;
+      if (descEl) descEl.textContent = 'Enemy forces dominated the sector. Regroup and strike back!';
     } else {
       if (titleEl) titleEl.textContent = '🤝 STALEMATE!';
-      if (descEl) descEl.textContent = 'Both combatants tied in glory.';
+      if (descEl) descEl.textContent = 'Outpost combat ended in a thrilling tie.';
     }
 
     if (playerStatEl) playerStatEl.textContent = this.playerScore;
@@ -1531,9 +1691,6 @@ export class MiniMilitiaGame {
     this.network.destroy();
     window.removeEventListener('resize', this.onResize);
     window.removeEventListener('orientationchange', this.onOrientationChange);
-    if (window.screen && window.screen.orientation) {
-      window.screen.orientation.removeEventListener('change', this.onOrientationChange);
-    }
     window.removeEventListener('keydown', this.onKeyDown);
     window.removeEventListener('keyup', this.onKeyUp);
     window.removeEventListener('mousemove', this.onMouseMove);

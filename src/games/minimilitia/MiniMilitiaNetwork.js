@@ -1,4 +1,4 @@
-// MiniMilitiaNetwork.js - Real-Time WebRTC Peer-to-Peer Multiplayer for Mini Militia
+// MiniMilitiaNetwork.js - Real-Time WebRTC Peer-to-Peer 4-Player Multiplayer
 import PeerPkg from 'peerjs';
 
 const Peer = PeerPkg.Peer || PeerPkg;
@@ -6,18 +6,31 @@ const Peer = PeerPkg.Peer || PeerPkg;
 export class MiniMilitiaNetwork {
   constructor() {
     this.peer = null;
-    this.conn = null;
     this.isHost = false;
     this.isConnected = false;
     this.roomCode = null;
     this.playerName = 'Soldier';
-    this.opponentName = 'Opponent';
+    this.playerSlot = 1; // 1 = Host, 2/3/4 = Guests
+    this.maxPlayers = 4;
+
+    // Connections Map (Host: peerId -> conn; Guest: hostPeerId -> conn)
+    this.connections = new Map();
+    this.players = new Map(); // slot -> { name, color, peerId }
+
+    // Color theme per slot
+    this.slotColors = {
+      1: '#3b82f6', // Player 1 (Blue)
+      2: '#ef4444', // Player 2 (Red)
+      3: '#22c55e', // Player 3 (Green)
+      4: '#eab308'  // Player 4 (Gold)
+    };
 
     // Callbacks
     this.onConnected = null;
-    this.onOpponentState = null;
-    this.onOpponentShoot = null;
-    this.onOpponentHit = null;
+    this.onPlayerListChange = null;
+    this.onRemotePlayerState = null;
+    this.onRemotePlayerShoot = null;
+    this.onRemotePlayerHit = null;
     this.onMatchEvent = null;
     this.onDisconnect = null;
     this.onError = null;
@@ -43,11 +56,20 @@ export class MiniMilitiaNetwork {
     return `arcadehub-mm-${this.cleanCode(roomCode)}`;
   }
 
-  createRoom(playerName, onSuccess, onError) {
+  createRoom(playerName, maxPlayers = 4, onSuccess, onError) {
     this.destroy();
     this.isHost = true;
     this.roomCode = this.generateRoomCode();
-    this.playerName = playerName || 'Host';
+    this.playerName = playerName || 'Commander';
+    this.playerSlot = 1;
+    this.maxPlayers = Math.max(2, Math.min(4, maxPlayers));
+
+    this.players.set(1, {
+      slot: 1,
+      name: this.playerName,
+      color: this.slotColors[1],
+      isHost: true
+    });
 
     const peerId = this.getPeerIdForRoom(this.roomCode);
 
@@ -62,26 +84,34 @@ export class MiniMilitiaNetwork {
         }
       });
 
-      this.peer.on('open', (id) => {
+      this.peer.on('open', () => {
         if (onSuccess) onSuccess(this.roomCode);
+        if (this.onPlayerListChange) this.onPlayerListChange(this.getPlayersArray());
       });
 
-      this.peer.on('connection', (connection) => {
-        // If already connected, close duplicate
-        if (this.conn && this.conn.open) {
-          connection.close();
+      this.peer.on('connection', (conn) => {
+        // Enforce max players
+        if (this.connections.size >= this.maxPlayers - 1) {
+          conn.on('open', () => {
+            conn.send({ type: 'error', message: 'Room is full (max 4 players)' });
+            conn.close();
+          });
           return;
         }
 
-        this.conn = connection;
-        this.setupConnection();
+        // Find next available slot
+        let assignedSlot = 2;
+        while (this.players.has(assignedSlot) && assignedSlot <= this.maxPlayers) {
+          assignedSlot++;
+        }
+
+        this.setupHostConnection(conn, assignedSlot);
       });
 
       this.peer.on('error', (err) => {
         console.warn('MiniMilitia Host Peer error:', err);
         if (err.type === 'unavailable-id') {
-          // Retry with new room code
-          this.createRoom(playerName, onSuccess, onError);
+          this.createRoom(playerName, maxPlayers, onSuccess, onError);
           return;
         }
         if (onError) onError(err);
@@ -91,6 +121,82 @@ export class MiniMilitiaNetwork {
       if (onError) onError(e);
       else if (this.onError) this.onError(e);
     }
+  }
+
+  setupHostConnection(conn, slot) {
+    conn.on('open', () => {
+      this.connections.set(conn.peer, conn);
+      this.isConnected = true;
+
+      // Welcome handshake with assigned slot and player list
+      conn.send({
+        type: 'welcome',
+        slot: slot,
+        color: this.slotColors[slot],
+        maxPlayers: this.maxPlayers,
+        players: this.getPlayersArray()
+      });
+    });
+
+    conn.on('data', (data) => {
+      if (!data || !data.type) return;
+
+      if (data.type === 'handshake') {
+        const guestName = data.name || `Player ${slot}`;
+        this.players.set(slot, {
+          slot: slot,
+          name: guestName,
+          color: this.slotColors[slot],
+          peerId: conn.peer
+        });
+
+        // Broadcast playerJoined to all clients
+        this.broadcast({
+          type: 'playerJoined',
+          slot: slot,
+          name: guestName,
+          color: this.slotColors[slot],
+          players: this.getPlayersArray()
+        });
+
+        if (this.onPlayerListChange) this.onPlayerListChange(this.getPlayersArray());
+        if (this.onConnected) this.onConnected({ isHost: true, roomCode: this.roomCode, slot });
+      } else if (data.type === 'state') {
+        data.slot = slot;
+        if (this.onRemotePlayerState) this.onRemotePlayerState(slot, data.state);
+        // Relay to other guests
+        this.broadcast(data, conn.peer);
+      } else if (data.type === 'shoot') {
+        data.slot = slot;
+        if (this.onRemotePlayerShoot) this.onRemotePlayerShoot(slot, data.bullet);
+        this.broadcast(data, conn.peer);
+      } else if (data.type === 'hit') {
+        if (this.onRemotePlayerHit) this.onRemotePlayerHit(data);
+        this.broadcast(data, conn.peer);
+      } else if (data.type === 'matchEvent') {
+        if (this.onMatchEvent) this.onMatchEvent(data.event, data.payload);
+        this.broadcast(data, conn.peer);
+      }
+    });
+
+    conn.on('close', () => {
+      this.connections.delete(conn.peer);
+      this.players.delete(slot);
+      this.broadcast({
+        type: 'playerLeft',
+        slot: slot,
+        players: this.getPlayersArray()
+      });
+
+      if (this.onPlayerListChange) this.onPlayerListChange(this.getPlayersArray());
+      if (this.connections.size === 0) {
+        this.isConnected = false;
+      }
+    });
+
+    conn.on('error', (err) => {
+      console.warn(`Host conn error [slot ${slot}]:`, err);
+    });
   }
 
   joinRoom(roomCode, playerName, onSuccess, onError) {
@@ -119,14 +225,8 @@ export class MiniMilitiaNetwork {
       });
 
       this.peer.on('open', () => {
-        const connection = this.peer.connect(hostPeerId, {
-          reliable: true
-        });
-
-        this.conn = connection;
-        this.setupConnection(() => {
-          if (onSuccess) onSuccess();
-        });
+        const conn = this.peer.connect(hostPeerId, { reliable: true });
+        this.setupGuestConnection(conn, onSuccess, onError);
       });
 
       this.peer.on('error', (err) => {
@@ -140,95 +240,134 @@ export class MiniMilitiaNetwork {
     }
   }
 
-  setupConnection(onOpenCallback) {
-    if (!this.conn) return;
+  setupGuestConnection(conn, onSuccess, onError) {
+    this.connections.set('host', conn);
 
-    this.conn.on('open', () => {
+    conn.on('open', () => {
       this.isConnected = true;
-
-      // Exchange handshake
-      this.send({
+      // Send handshake
+      conn.send({
         type: 'handshake',
-        name: this.playerName,
-        isHost: this.isHost
+        name: this.playerName
       });
+      if (onSuccess) onSuccess();
+    });
 
-      if (onOpenCallback) onOpenCallback();
-      if (this.onConnected) {
-        this.onConnected({
-          isHost: this.isHost,
-          roomCode: this.roomCode
-        });
+    conn.on('data', (data) => {
+      if (!data || !data.type) return;
+
+      switch (data.type) {
+        case 'welcome':
+          this.playerSlot = data.slot;
+          this.maxPlayers = data.maxPlayers || 4;
+          if (data.players) {
+            this.players.clear();
+            for (const p of data.players) this.players.set(p.slot, p);
+            if (this.onPlayerListChange) this.onPlayerListChange(this.getPlayersArray());
+          }
+          if (this.onConnected) {
+            this.onConnected({
+              isHost: false,
+              roomCode: this.roomCode,
+              slot: this.playerSlot
+            });
+          }
+          break;
+
+        case 'playerJoined':
+          if (data.players) {
+            this.players.clear();
+            for (const p of data.players) this.players.set(p.slot, p);
+            if (this.onPlayerListChange) this.onPlayerListChange(this.getPlayersArray());
+          }
+          break;
+
+        case 'playerLeft':
+          this.players.delete(data.slot);
+          if (data.players) {
+            this.players.clear();
+            for (const p of data.players) this.players.set(p.slot, p);
+          }
+          if (this.onPlayerListChange) this.onPlayerListChange(this.getPlayersArray());
+          break;
+
+        case 'state':
+          if (this.onRemotePlayerState && data.slot !== this.playerSlot) {
+            this.onRemotePlayerState(data.slot, data.state);
+          }
+          break;
+
+        case 'shoot':
+          if (this.onRemotePlayerShoot && data.slot !== this.playerSlot) {
+            this.onRemotePlayerShoot(data.slot, data.bullet);
+          }
+          break;
+
+        case 'hit':
+          if (this.onRemotePlayerHit) {
+            this.onRemotePlayerHit(data);
+          }
+          break;
+
+        case 'matchEvent':
+          if (this.onMatchEvent) {
+            this.onMatchEvent(data.event, data.payload);
+          }
+          break;
+
+        case 'error':
+          if (onError) onError(new Error(data.message));
+          else if (this.onError) this.onError(new Error(data.message));
+          break;
       }
     });
 
-    this.conn.on('data', (data) => {
-      this.handleIncomingData(data);
-    });
-
-    this.conn.on('close', () => {
+    conn.on('close', () => {
       this.isConnected = false;
       if (this.onDisconnect) this.onDisconnect();
     });
 
-    this.conn.on('error', (err) => {
-      console.warn('Connection data error:', err);
+    conn.on('error', (err) => {
+      console.warn('Guest conn error:', err);
       if (this.onError) this.onError(err);
     });
   }
 
-  handleIncomingData(data) {
-    if (!data || !data.type) return;
+  getPlayersArray() {
+    return Array.from(this.players.values());
+  }
 
-    switch (data.type) {
-      case 'handshake':
-        this.opponentName = data.name || (this.isHost ? 'Guest' : 'Host');
-        break;
-
-      case 'state':
-        if (this.onOpponentState) {
-          this.onOpponentState(data.state);
-        }
-        break;
-
-      case 'shoot':
-        if (this.onOpponentShoot) {
-          this.onOpponentShoot(data.bullet);
-        }
-        break;
-
-      case 'hit':
-        if (this.onOpponentHit) {
-          this.onOpponentHit(data);
-        }
-        break;
-
-      case 'matchEvent':
-        if (this.onMatchEvent) {
-          this.onMatchEvent(data.event, data.payload);
-        }
-        break;
+  broadcast(data, excludePeerId = null) {
+    for (const [peerId, conn] of this.connections.entries()) {
+      if (peerId !== excludePeerId && conn.open) {
+        try {
+          conn.send(data);
+        } catch (_) {}
+      }
     }
   }
 
   send(data) {
-    if (this.conn && this.conn.open) {
-      try {
-        this.conn.send(data);
-      } catch (err) {
-        console.warn('Error sending packet:', err);
+    if (this.isHost) {
+      this.broadcast(data);
+    } else {
+      const hostConn = this.connections.get('host');
+      if (hostConn && hostConn.open) {
+        try {
+          hostConn.send(data);
+        } catch (_) {}
       }
     }
   }
 
   sendState(playerState) {
     const now = Date.now();
-    // Throttle state updates to ~33Hz (every 30ms) for optimal bandwidth & smooth gameplay
     if (now - this.lastSentStateTime < 30) return;
     this.lastSentStateTime = now;
 
     this.send({
       type: 'state',
+      slot: this.playerSlot,
       state: {
         x: Math.round(playerState.x * 10) / 10,
         y: Math.round(playerState.y * 10) / 10,
@@ -249,6 +388,7 @@ export class MiniMilitiaNetwork {
   sendShoot(bullet) {
     this.send({
       type: 'shoot',
+      slot: this.playerSlot,
       bullet: {
         id: bullet.id,
         x: bullet.x,
@@ -256,7 +396,7 @@ export class MiniMilitiaNetwork {
         angle: bullet.angle,
         speed: bullet.speed,
         damage: bullet.damage,
-        ownerId: 'opponent'
+        ownerId: `player_${this.playerSlot}`
       }
     });
   }
@@ -279,16 +419,14 @@ export class MiniMilitiaNetwork {
 
   destroy() {
     this.isConnected = false;
-    if (this.conn) {
-      try {
-        this.conn.close();
-      } catch (_) {}
-      this.conn = null;
+    for (const conn of this.connections.values()) {
+      try { conn.close(); } catch (_) {}
     }
+    this.connections.clear();
+    this.players.clear();
+
     if (this.peer) {
-      try {
-        this.peer.destroy();
-      } catch (_) {}
+      try { this.peer.destroy(); } catch (_) {}
       this.peer = null;
     }
   }
