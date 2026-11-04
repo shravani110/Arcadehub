@@ -65,6 +65,7 @@ export class CupPongGame {
     this.initDOM();
     this.initThree();
     this.initTable();
+    this.initCups();
     this.initBall();
     this.initEvents();
 
@@ -674,6 +675,7 @@ export class CupPongGame {
     };
 
     this.canvasContainer.addEventListener('pointerdown', this.handlePointerDown, { passive: false });
+    this.container.addEventListener('pointerdown', this.handlePointerDown, { passive: false });
     window.addEventListener('pointermove', this.handlePointerMove, { passive: false });
     window.addEventListener('pointerup', this.handlePointerUp, { passive: false });
     window.addEventListener('pointercancel', this.handlePointerUp, { passive: false });
@@ -1277,6 +1279,12 @@ export class CupPongGame {
       this.hintTimer = null;
     }
 
+    if (this.canvasContainer) {
+      this.canvasContainer.removeEventListener('pointerdown', this.handlePointerDown);
+    }
+    if (this.container) {
+      this.container.removeEventListener('pointerdown', this.handlePointerDown);
+    }
     window.removeEventListener('pointermove', this.handlePointerMove);
     window.removeEventListener('pointerup', this.handlePointerUp);
     window.removeEventListener('pointercancel', this.handlePointerUp);
