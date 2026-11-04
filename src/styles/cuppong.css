@@ -1,4 +1,4 @@
-/* cuppong.css - Cup Pong (Beer Pong 3D) Arcade Game Styles */
+/* cuppong.css - Cup Pong (Beer Pong 3D) Mobile Arcade Game Styles */
 
 .cuppong-wrapper {
   position: relative;
@@ -20,6 +20,7 @@
   width: 100%;
   height: 100%;
   z-index: 1;
+  touch-action: none;
 }
 
 /* --- SCREEN 1: Setup / Difficulty Menu (Matches Reference Screenshot 2) --- */
@@ -89,17 +90,17 @@
   background: #047857;
   color: #ffffff;
   text-align: center;
-  padding: 16px 20px;
+  padding: 14px 18px;
   border-radius: 20px;
   box-shadow: 0 8px 24px rgba(4, 120, 87, 0.25);
-  margin-top: 10px;
+  margin-top: 6px;
 }
 
 .menu-instructions p {
   margin: 0;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
-  line-height: 1.45;
+  line-height: 1.4;
 }
 
 /* Central Difficulty Adjuster */
@@ -109,26 +110,26 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   margin: auto 0;
 }
 
 .avatar-badge {
-  width: 80px;
-  height: 80px;
+  width: 76px;
+  height: 76px;
   border-radius: 50%;
   background: #ffffff;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 42px;
+  font-size: 40px;
   border: 4px solid #f59e0b;
   transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .difficulty-label {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 900;
   letter-spacing: 0.04em;
   color: #f59e0b;
@@ -185,7 +186,7 @@
   font-weight: 800;
   color: #475569;
   cursor: pointer;
-  padding: 8px 12px;
+  padding: 8px 10px;
   border-radius: 9999px;
   transition: color 0.15s ease;
 }
@@ -198,29 +199,29 @@
   font-size: 12px;
   font-weight: 700;
   color: #64748b;
-  margin-top: 2px;
 }
 
-/* Mode Switcher Pill (1P vs 2P) */
+/* Mode Switcher (1P vs 2P vs 3P) */
 .mode-toggle-group {
   display: flex;
   background: #e2e8f0;
   border-radius: 9999px;
   padding: 4px;
   gap: 4px;
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 .mode-btn {
   border: none;
   background: transparent;
-  padding: 6px 16px;
+  padding: 6px 14px;
   border-radius: 9999px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
   color: #64748b;
   cursor: pointer;
   transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
 .mode-btn.active {
@@ -299,39 +300,72 @@
   padding: 6px 18px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 900;
-  min-width: 52px;
+  min-width: 50px;
 }
 
 /* Top-Left: Opponent / Bot Score */
 .score-capsule.opponent-score {
-  top: 18px;
-  left: 18px;
+  top: 16px;
+  left: 16px;
   color: #38bdf8;
   border-color: #0284c7;
 }
 
 /* Bottom-Right: Player Score */
 .score-capsule.player-score {
-  bottom: 18px;
-  right: 18px;
+  bottom: 16px;
+  right: 16px;
   color: #f43f5e;
   border-color: #e11d48;
+}
+
+/* 3-Player Score Header Bar (for 3-Player Mode) */
+.three-player-scoreboard {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.p-score-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(8px);
+  border: 2px solid #334155;
+  border-radius: 9999px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 900;
+  color: #f8fafc;
+}
+
+.p-score-pill.p1 { border-color: #38bdf8; color: #38bdf8; }
+.p-score-pill.p2 { border-color: #f43f5e; color: #f43f5e; }
+.p-score-pill.p3 { border-color: #34d399; color: #34d399; }
+
+.p-score-pill.active-turn {
+  transform: scale(1.08);
+  box-shadow: 0 0 14px currentColor;
 }
 
 /* Exit / Pause Button (White circle with X on right side) */
 .btn-cuppong-exit {
   position: absolute;
   top: 50%;
-  right: 16px;
+  right: 14px;
   transform: translateY(-50%);
   width: 44px;
   height: 44px;
   border-radius: 50%;
   background: #ffffff;
   border: none;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -346,59 +380,42 @@
   transform: translateY(-50%) scale(0.92);
 }
 
-/* Camera Toggle Button */
-.btn-cuppong-cam {
-  position: absolute;
-  top: 18px;
-  right: 18px;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: rgba(15, 23, 42, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #f8fafc;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  pointer-events: auto;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
-}
-
-.btn-cuppong-cam:active {
-  transform: scale(0.92);
-}
-
 /* Turn Announcement Pill */
 .cuppong-turn-banner {
   position: absolute;
-  top: 80px;
+  top: 68px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(15, 23, 42, 0.82);
+  background: rgba(15, 23, 42, 0.85);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
   color: #f8fafc;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
-  padding: 8px 24px;
+  padding: 6px 20px;
   border-radius: 9999px;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
   transition: all 0.2s ease;
   pointer-events: none;
+  white-space: nowrap;
 }
 
-.cuppong-turn-banner.player-turn {
+.cuppong-turn-banner.p1-turn {
   color: #38bdf8;
-  border-color: rgba(56, 189, 248, 0.5);
+  border-color: rgba(56, 189, 248, 0.6);
 }
 
-.cuppong-turn-banner.bot-turn {
+.cuppong-turn-banner.p2-turn {
   color: #fb7185;
-  border-color: rgba(251, 113, 133, 0.5);
+  border-color: rgba(251, 113, 133, 0.6);
+}
+
+.cuppong-turn-banner.p3-turn {
+  color: #34d399;
+  border-color: rgba(52, 211, 153, 0.6);
 }
 
 /* Aim Trajectory Overlay Guide */
@@ -409,46 +426,50 @@
   z-index: 12;
 }
 
+/* Swipe Reminder Pill - Shown ONLY at match start for 2.5s */
 .aim-hint-pill {
   position: absolute;
   bottom: 84px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(15, 23, 42, 0.75);
+  background: rgba(15, 23, 42, 0.85);
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   color: #ffffff;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
   padding: 6px 18px;
   border-radius: 9999px;
   display: flex;
   align-items: center;
   gap: 6px;
-  animation: pulseHint 1.8s infinite ease-in-out;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  pointer-events: none;
 }
 
-@keyframes pulseHint {
-  0%, 100% { opacity: 0.7; transform: translateX(-50%) scale(1); }
-  50% { opacity: 1; transform: translateX(-50%) scale(1.05); }
+.aim-hint-pill.fade-out {
+  opacity: 0;
+  transform: translateX(-50%) translateY(10px);
 }
 
 /* Floating Sunk Cup Banner (+1 CUP) */
 .cup-sunk-toast {
   position: absolute;
-  top: 40%;
+  top: 36%;
   left: 50%;
   transform: translate(-50%, -50%) scale(0.8);
   background: linear-gradient(135deg, #059669, #10b981);
   color: #ffffff;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 900;
-  padding: 12px 28px;
+  padding: 10px 24px;
   border-radius: 9999px;
   box-shadow: 0 10px 30px rgba(16, 185, 129, 0.5);
   pointer-events: none;
   animation: popSunk 1.2s forwards ease-out;
   z-index: 25;
+  white-space: nowrap;
 }
 
 @keyframes popSunk {
@@ -458,7 +479,7 @@
   100% { opacity: 0; transform: translate(-50%, -80%) scale(0.9); }
 }
 
-/* --- SCREEN 3: Game Over / Victory Screen (Matches Reference Screenshot 5) --- */
+/* --- SCREEN 3: Game Over / Victory Screen --- */
 .cuppong-victory-screen {
   position: absolute;
   inset: 0;
@@ -472,10 +493,21 @@
   display: none !important;
 }
 
-/* Split Background: Blue Top, Red Bottom */
+/* Split Backgrounds (2-Player and 3-Player modes) */
 .victory-split-top {
   flex: 1;
   background: #38bdf8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.victory-split-mid {
+  flex: 1;
+  background: #10b981;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -497,13 +529,13 @@
 
 /* Medal Graphic */
 .medal-circle {
-  width: 100px;
-  height: 100px;
+  width: 90px;
+  height: 90px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 46px;
+  font-size: 42px;
   font-weight: 900;
   color: #ffffff;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
@@ -513,13 +545,19 @@
 
 .medal-gold {
   background: linear-gradient(135deg, #fbbf24, #f59e0b);
-  border: 5px solid #fef08a;
+  border: 4px solid #fef08a;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .medal-silver {
   background: linear-gradient(135deg, #cbd5e1, #94a3b8);
-  border: 5px solid #f8fafc;
+  border: 4px solid #f8fafc;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.medal-bronze {
+  background: linear-gradient(135deg, #d97706, #b45309);
+  border: 4px solid #fde68a;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
@@ -532,8 +570,8 @@
 }
 
 .medal-ribbon span {
-  width: 16px;
-  height: 40px;
+  width: 14px;
+  height: 36px;
   background: #ffffff;
   border-radius: 4px;
   transform: rotate(-12deg);
@@ -545,26 +583,13 @@
 
 /* Victory Text */
 .victory-headline {
-  font-size: 38px;
+  font-size: 32px;
   font-weight: 900;
   color: #ffffff;
-  margin-top: 24px;
+  margin-top: 18px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   text-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
-}
-
-/* Decorative Stars */
-.star-particle {
-  position: absolute;
-  color: #fef08a;
-  font-size: 28px;
-  animation: starTwinkle 1.5s infinite alternate ease-in-out;
-}
-
-@keyframes starTwinkle {
-  0% { transform: scale(0.8) rotate(0deg); opacity: 0.7; }
-  100% { transform: scale(1.2) rotate(25deg); opacity: 1; }
 }
 
 /* Victory Bottom Floating Action Bar */
@@ -577,7 +602,7 @@
   gap: 12px;
   z-index: 10;
   width: 90%;
-  max-width: 380px;
+  max-width: 360px;
 }
 
 .btn-victory-play {
@@ -585,9 +610,9 @@
   background: #ffffff;
   color: #0f172a;
   border: none;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 900;
-  padding: 14px;
+  padding: 13px;
   border-radius: 9999px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
   cursor: pointer;
@@ -605,9 +630,9 @@
   backdrop-filter: blur(8px);
   color: #ffffff;
   border: 1px solid rgba(255, 255, 255, 0.3);
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 900;
-  padding: 14px;
+  padding: 13px;
   border-radius: 9999px;
   cursor: pointer;
   text-transform: uppercase;
@@ -639,8 +664,8 @@
 .modal-box {
   background: #ffffff;
   border-radius: 24px;
-  padding: 28px 24px;
-  max-width: 340px;
+  padding: 26px 22px;
+  max-width: 330px;
   width: 100%;
   text-align: center;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
@@ -650,13 +675,13 @@
   font-size: 22px;
   font-weight: 900;
   color: #0f172a;
-  margin: 0 0 8px 0;
+  margin: 0 0 6px 0;
 }
 
 .modal-text {
-  font-size: 14px;
+  font-size: 13px;
   color: #64748b;
-  margin: 0 0 22px 0;
+  margin: 0 0 20px 0;
   line-height: 1.4;
 }
 
@@ -668,9 +693,9 @@
 
 .btn-modal-action {
   width: 100%;
-  padding: 13px;
+  padding: 12px;
   border-radius: 14px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   border: none;
   cursor: pointer;
