@@ -130,8 +130,21 @@ export class MiniMilitiaRenderer {
     this.renderBullets(ctx, state.bullets);
 
     // 8. Render Bots / Opponents
-    for (const bot of state.bots) {
-      this.renderBot(ctx, bot, state.time);
+    if (state.bots) {
+      for (const bot of state.bots) {
+        this.renderBot(ctx, bot, state.time);
+      }
+    }
+
+    // 8b. Render Remote Players (Online Multiplayer or Local 2P)
+    if (state.remotePlayers) {
+      for (const rp of state.remotePlayers) {
+        if (!rp.isDead) {
+          this.renderBot(ctx, rp, state.time);
+        } else {
+          this.renderRespawnBeacon(ctx, rp, state.time);
+        }
+      }
     }
 
     // 9. Render Main Player Soldier or Respawn Countdown
@@ -355,8 +368,8 @@ export class MiniMilitiaRenderer {
 
     ctx.restore();
 
-    // Health Bar above player head
-    this.renderMiniHealthBar(ctx, player.x, player.y - 18, player.width, player.health);
+    // Health Bar and Gamer Tag above player head
+    this.renderMiniHealthBar(ctx, player.x, player.y - 18, player.width, player.health, player.name || null);
   }
 
   renderRespawnBeacon(ctx, player, time) {
@@ -594,12 +607,36 @@ export class MiniMilitiaRenderer {
     }
 
     // 2. TOP CENTER: Scoreboard & Countdown Timer
-    // Blue Score Box (Left)
     const scoreBoxW = 75;
     const scoreBoxH = 36;
     const blueBoxX = baseW / 2 - 120;
     const blueBoxY = 18;
 
+    const timerBoxW = 86;
+    const timerBoxH = 40;
+    const timerBoxX = baseW / 2 - timerBoxW / 2;
+    const timerBoxY = 16;
+
+    const redBoxX = baseW / 2 + 45;
+    const redBoxY = 18;
+
+    // Multiplayer Names Tag
+    if (state.playType === 'online' || state.playType === 'local') {
+      ctx.font = 'bold 11px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#60a5fa';
+      ctx.fillText((state.playerName || 'P1').toUpperCase(), blueBoxX + scoreBoxW / 2, blueBoxY - 7);
+      ctx.fillStyle = '#f87171';
+      ctx.fillText((state.opponentName || 'P2').toUpperCase(), redBoxX + scoreBoxW / 2, redBoxY - 7);
+
+      if (state.roomCode) {
+        ctx.fillStyle = '#22c55e';
+        ctx.font = 'bold 10px Arial';
+        ctx.fillText(`ROOM: ${state.roomCode}`, baseW / 2, timerBoxY + 40 + 14);
+      }
+    }
+
+    // Blue Score Box (Left)
     ctx.fillStyle = '#0044ff';
     this.roundRect(ctx, blueBoxX, blueBoxY, scoreBoxW, scoreBoxH, 6, true, false);
     ctx.fillStyle = '#ffffff';
@@ -609,11 +646,6 @@ export class MiniMilitiaRenderer {
     ctx.fillText(state.playerScore || 0, blueBoxX + scoreBoxW / 2, blueBoxY + scoreBoxH / 2);
 
     // Timer Box (Center)
-    const timerBoxW = 86;
-    const timerBoxH = 40;
-    const timerBoxX = baseW / 2 - timerBoxW / 2;
-    const timerBoxY = 16;
-
     ctx.fillStyle = '#000000';
     this.roundRect(ctx, timerBoxX, timerBoxY, timerBoxW, timerBoxH, 6, true, false);
 
@@ -628,9 +660,6 @@ export class MiniMilitiaRenderer {
     ctx.fillText(timeStr, timerBoxX + timerBoxW / 2, timerBoxY + timerBoxH / 2);
 
     // Red Score Box (Right)
-    const redBoxX = baseW / 2 + 45;
-    const redBoxY = 18;
-
     ctx.fillStyle = '#e60000';
     this.roundRect(ctx, redBoxX, redBoxY, scoreBoxW, scoreBoxH, 6, true, false);
     ctx.fillStyle = '#ffffff';

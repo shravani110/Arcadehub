@@ -397,19 +397,19 @@ export class HubView {
           <!-- Game 11: Mini Militia (2D Combat Shooter) -->
           <article class="game-card card-minimilitia" data-game="minimilitia">
             <div class="card-preview">
-              <span class="card-badge" style="background: rgba(89, 184, 235, 0.25); color: #59b8eb; border-color: rgba(89, 184, 235, 0.4);">2D COMBAT SHOOTER</span>
+              <span class="card-badge" style="background: rgba(34, 197, 94, 0.25); color: #22c55e; border-color: rgba(34, 197, 94, 0.5);">SOLO & MULTIPLAYER</span>
               <div class="preview-visual" style="display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle, #1e3a4b 0%, #0c1820 100%); position: relative; overflow: hidden;">
                 <img src="/assets/minimilitia/bg2.jpeg" alt="Jungle" style="position: absolute; width: 100%; height: 100%; object-fit: cover; opacity: 0.35;" />
                 <img src="/assets/minimilitia/Ak-47.png" alt="AK-47" style="position: relative; width: 130px; height: auto; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.8)); margin-bottom: 8px;" />
-                <div style="position: relative; display: flex; align-items: center; gap: 8px;">
-                  <span style="background: rgba(0, 255, 68, 0.2); color: #00ff44; border: 1px solid #00ff44; font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 10px;">JETPACK ⚡</span>
-                  <span style="background: rgba(160, 32, 240, 0.25); color: #e024c3; border: 1px solid #e024c3; font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 10px;">AK-47 💥</span>
+                <div style="position: relative; display: flex; align-items: center; gap: 6px;">
+                  <span style="background: rgba(0, 255, 68, 0.2); color: #00ff44; border: 1px solid #00ff44; font-size: 11px; font-weight: bold; padding: 2px 7px; border-radius: 10px;">JETPACK ⚡</span>
+                  <span style="background: rgba(59, 130, 246, 0.25); color: #60a5fa; border: 1px solid #60a5fa; font-size: 11px; font-weight: bold; padding: 2px 7px; border-radius: 10px;">ONLINE 1v1 🌐</span>
                 </div>
               </div>
             </div>
             <div class="card-content">
               <h2 class="card-title">Mini Militia</h2>
-              <p class="card-desc">Authentic Doodle Army 2 style combat! Jetpack across jungle platforms, aim 360°, spray 25-round AK-47 bursts, and battle AI bots in intense tactical shootouts.</p>
+              <p class="card-desc">Jetpack airborne combat in authentic Doodle Army 2 style! Play Single Player vs AI bots, host 1v1 Online private rooms, or battle a friend in Local 2-Player.</p>
               <div class="card-footer">
                 <span class="card-tag">Best: ${miniMilitiaBest} pts</span>
                 <button class="card-play-btn">
