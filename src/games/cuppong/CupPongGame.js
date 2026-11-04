@@ -33,9 +33,13 @@ export class CupPongGame {
     this.p3Score = 0; // Green (for 3-Player mode)
     this.totalCups = 10;
 
-    // Reminder pill flag (shown ONLY at start)
+    // Timers & State Guards (Prevents game from hanging or getting stuck)
     this.hasDismissedHint = false;
     this.hintTimer = null;
+    this.botTimer = null;
+    this.shotTimer = null;
+    this.isTransitioning = false;
+    this.tableBounces = 0;
 
     // Physics Ball State
     this.ball = null;
@@ -637,7 +641,7 @@ export class CupPongGame {
 
     // 5. Mobile Touch & Swipe Gestures
     this.handlePointerDown = (e) => {
-      if (this.state !== 'playing' || this.ballState !== 'idle') return;
+      if (this.state !== 'playing' || this.ballState !== 'idle' || this.isTransitioning) return;
       if (this.currentTurn === 'bot' && this.gameMode === '1p') return;
 
       // Dismiss reminder pill on first touch
@@ -653,14 +657,18 @@ export class CupPongGame {
     };
 
     this.handlePointerMove = (e) => {
-      if (!this.isDragging) return;
+      if (!this.isDragging || (this.currentTurn === 'bot' && this.gameMode === '1p')) return;
       this.dragCurrent.x = e.clientX;
       this.dragCurrent.y = e.clientY;
       this.drawAimGuide();
     };
 
     this.handlePointerUp = (e) => {
-      if (!this.isDragging) return;
+      if (!this.isDragging || (this.currentTurn === 'bot' && this.gameMode === '1p')) {
+        this.isDragging = false;
+        this.clearAimGuide();
+        return;
+      }
       this.isDragging = false;
       this.clearAimGuide();
 
@@ -674,7 +682,6 @@ export class CupPongGame {
       }
     };
 
-    this.canvasContainer.addEventListener('pointerdown', this.handlePointerDown, { passive: false });
     this.container.addEventListener('pointerdown', this.handlePointerDown, { passive: false });
     window.addEventListener('pointermove', this.handlePointerMove, { passive: false });
     window.addEventListener('pointerup', this.handlePointerUp, { passive: false });
@@ -732,6 +739,17 @@ export class CupPongGame {
     this.p2Score = 0;
     this.p3Score = 0;
     this.hasDismissedHint = false;
+    this.isTransitioning = false;
+    this.tableBounces = 0;
+
+    if (this.botTimer) {
+      clearTimeout(this.botTimer);
+      this.botTimer = null;
+    }
+    if (this.shotTimer) {
+      clearTimeout(this.shotTimer);
+      this.shotTimer = null;
+    }
 
     // Turn order setup
     if (this.gameMode === '1p') {
@@ -820,11 +838,12 @@ export class CupPongGame {
         this.scene.background.set('#ef4444');
 
         if (this.gameMode === '1p') {
-          setTimeout(() => {
+          if (this.botTimer) clearTimeout(this.botTimer);
+          this.botTimer = setTimeout(() => {
             if (this.state === 'playing' && this.currentTurn === 'bot') {
               this.executeBotThrow();
             }
-          }, 1100);
+          }, 850);
         }
       }
     }
@@ -867,9 +886,18 @@ export class CupPongGame {
   }
 
   executeThrow(dragX, dragY, elapsed) {
+    if (this.isTransitioning) return;
     this.ballState = 'flying';
     this.ballRing.visible = false;
+    this.tableBounces = 0;
     this.audio.playThrow();
+
+    if (this.shotTimer) clearTimeout(this.shotTimer);
+    this.shotTimer = setTimeout(() => {
+      if (this.ballState === 'flying' && this.state === 'playing') {
+        this.handleBallMiss();
+      }
+    }, 2800);
 
     const power = Math.min(Math.max(dragY / 125, 0.72), 1.4);
     const speedRatio = Math.min(dragY / (elapsed * 450), 1.5);
@@ -884,14 +912,26 @@ export class CupPongGame {
   }
 
   executeBotThrow() {
-    if (this.state !== 'playing' || this.ballState !== 'idle') return;
+    if (this.state !== 'playing' || this.currentTurn !== 'bot') return;
 
+    this.resetBallPosition();
     this.ballState = 'flying';
     this.ballRing.visible = false;
+    this.tableBounces = 0;
     this.audio.playThrow();
 
+    if (this.shotTimer) clearTimeout(this.shotTimer);
+    this.shotTimer = setTimeout(() => {
+      if (this.ballState === 'flying' && this.state === 'playing') {
+        this.handleBallMiss();
+      }
+    }, 2800);
+
     const active = this.activeCups.filter((c) => !c.isSunk);
-    if (active.length === 0) return;
+    if (active.length === 0) {
+      this.triggerVictory();
+      return;
+    }
 
     const targetCup = active[Math.floor(Math.random() * active.length)];
     const startPos = this.ballPos;
@@ -906,11 +946,11 @@ export class CupPongGame {
       errorX = (Math.random() - 0.5) * 0.9;
       errorZ = (Math.random() - 0.5) * 1.3;
     } else if (this.difficulty === 'medium') {
-      errorX = (Math.random() - 0.5) * 0.35;
-      errorZ = (Math.random() - 0.5) * 0.5;
+      errorX = (Math.random() - 0.5) * 0.4;
+      errorZ = (Math.random() - 0.5) * 0.52;
     } else {
-      errorX = (Math.random() - 0.5) * 0.1;
-      errorZ = (Math.random() - 0.5) * 0.12;
+      errorX = (Math.random() - 0.5) * 0.12;
+      errorZ = (Math.random() - 0.5) * 0.16;
     }
 
     const vx = (dx + errorX) / flightTime;
@@ -921,9 +961,34 @@ export class CupPongGame {
     this.ballVel.set(vx, vy, vz);
   }
 
+  handleBallMiss() {
+    if (this.isTransitioning) return;
+    this.isTransitioning = true;
+    this.ballState = 'missed';
+
+    if (this.shotTimer) {
+      clearTimeout(this.shotTimer);
+      this.shotTimer = null;
+    }
+
+    setTimeout(() => {
+      if (this.state === 'playing') {
+        this.switchTurn();
+      }
+      this.isTransitioning = false;
+    }, 600);
+  }
+
   handleCupSink(cup) {
+    if (this.isTransitioning) return;
+    this.isTransitioning = true;
     this.ballState = 'sunk';
     cup.isSunk = true;
+
+    if (this.shotTimer) {
+      clearTimeout(this.shotTimer);
+      this.shotTimer = null;
+    }
 
     this.audio.playCupSink();
     this.audio.playScoreChime();
@@ -978,13 +1043,19 @@ export class CupPongGame {
     // Check Victory Condition
     const remainingCups = this.activeCups.filter((c) => !c.isSunk).length;
     if (remainingCups === 0) {
-      setTimeout(() => this.triggerVictory(), 850);
+      setTimeout(() => {
+        this.triggerVictory();
+        this.isTransitioning = false;
+      }, 850);
       return;
     }
 
     setTimeout(() => {
-      this.switchTurn();
-    }, 1350);
+      if (this.state === 'playing') {
+        this.switchTurn();
+      }
+      this.isTransitioning = false;
+    }, 1250);
   }
 
   spawnWaterSplash(pos) {
@@ -1018,10 +1089,22 @@ export class CupPongGame {
   }
 
   switchTurn() {
+    if (this.state !== 'playing') return;
+
+    if (this.botTimer) {
+      clearTimeout(this.botTimer);
+      this.botTimer = null;
+    }
+    if (this.shotTimer) {
+      clearTimeout(this.shotTimer);
+      this.shotTimer = null;
+    }
+
     const idx = this.turnOrder.indexOf(this.currentTurn);
     const nextIdx = (idx + 1) % this.turnOrder.length;
     this.currentTurn = this.turnOrder[nextIdx];
 
+    this.tableBounces = 0;
     this.resetBallPosition();
     this.updateTurnUI();
   }
@@ -1159,17 +1242,18 @@ export class CupPongGame {
     this.ballShadow.position.set(this.ballPos.x, 0.005, this.ballPos.z);
     this.ballShadow.scale.set(shadowScale, shadowScale, shadowScale);
 
-    // Collision with Table (Table bounds: X in [-2.3, 2.3], Z in [-6.7, 6.7], Y = 0)
+    // Collision with Table (Table bounds: X in [-2.3, 2.3], Z in [-6.75, 6.75], Y = 0)
     if (
       this.ballPos.y <= this.ballRadius &&
       Math.abs(this.ballPos.x) <= 2.3 &&
-      Math.abs(this.ballPos.z) <= 6.7 &&
+      Math.abs(this.ballPos.z) <= 6.75 &&
       this.ballVel.y < 0
     ) {
       this.ballPos.y = this.ballRadius;
       this.ballVel.y = -this.ballVel.y * 0.65;
       this.ballVel.x *= 0.88;
       this.ballVel.z *= 0.88;
+      this.tableBounces = (this.tableBounces || 0) + 1;
       this.audio.playTableBounce(Math.abs(this.ballVel.y));
     }
 
@@ -1204,14 +1288,21 @@ export class CupPongGame {
       }
     }
 
-    // Ball Out of Bounds / Fell off Table
-    if (this.ballPos.y < -3.5 || Math.abs(this.ballPos.z) > 11.0 || Math.abs(this.ballPos.x) > 5.0) {
-      this.ballState = 'missed';
-      setTimeout(() => {
-        if (this.state === 'playing') {
-          this.switchTurn();
-        }
-      }, 750);
+    // Ball stopped on table or low energy after bounces
+    const horizontalSpeed = Math.sqrt(this.ballVel.x * this.ballVel.x + this.ballVel.z * this.ballVel.z);
+    if (
+      this.ballPos.y <= this.ballRadius + 0.08 &&
+      ((this.tableBounces >= 3 && Math.abs(this.ballVel.y) < 0.5) ||
+        (this.tableBounces >= 1 && horizontalSpeed < 0.35 && Math.abs(this.ballVel.y) < 0.2))
+    ) {
+      this.handleBallMiss();
+      return;
+    }
+
+    // Ball Out of Bounds / Dropped below table level
+    if (this.ballPos.y < -0.6 || Math.abs(this.ballPos.z) > 8.5 || Math.abs(this.ballPos.x) > 3.8) {
+      this.handleBallMiss();
+      return;
     }
 
     this.ball.position.copy(this.ballPos);
@@ -1277,6 +1368,16 @@ export class CupPongGame {
     if (this.hintTimer) {
       clearTimeout(this.hintTimer);
       this.hintTimer = null;
+    }
+
+    if (this.botTimer) {
+      clearTimeout(this.botTimer);
+      this.botTimer = null;
+    }
+
+    if (this.shotTimer) {
+      clearTimeout(this.shotTimer);
+      this.shotTimer = null;
     }
 
     if (this.canvasContainer) {
