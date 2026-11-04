@@ -539,8 +539,9 @@ export class TrafficManager {
   }
 
   reset() {
-    this.featuredRedTuner.mesh.position.set(9.5, 0, 18);
+    this.featuredRedTuner.mesh.position.set(9.5, 0, 24);
     this.featuredRedTuner.speedKmh = 88;
+    this.featuredRedTuner.hasNearMissed = false;
 
     for (let i = 1; i < this.vehicles.length; i++) {
       const carObj = this.vehicles[i];
@@ -548,7 +549,8 @@ export class TrafficManager {
       carObj.lane = lane;
       carObj.targetLane = lane;
       carObj.speedKmh = 72 + Math.random() * 50;
-      carObj.mesh.position.set(lane, 0, 45 + i * 26);
+      carObj.mesh.position.set(lane, 0, 52 + i * 28);
+      carObj.hasNearMissed = false;
     }
   }
 

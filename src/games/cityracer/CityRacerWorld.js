@@ -262,60 +262,60 @@ export class CityRacerWorld {
       }
     });
 
-    // 5. Overhead Highway Sign Gantries with Red/Green Traffic Lights
-    if (Math.random() < 0.65) {
+    // 5. Overhead Highway Sign Gantries with Red/Green Traffic Lights (High 12m highway clearance)
+    if (zOffset > 100 && Math.random() < 0.5) {
       const gantryGroup = new THREE.Group();
       gantryGroup.position.set(0, 0, 0);
 
-      // Steel Posts
+      // Steel Posts (12m high for ample highway clearance, prevents mobile view clipping)
       const postMat = new THREE.MeshStandardMaterial({ color: '#475569', metalness: 0.85, roughness: 0.2 });
-      [-roadWidth / 2 - 0.4, roadWidth / 2 + 0.4].forEach((px) => {
-        const post = new THREE.Mesh(new THREE.BoxGeometry(0.55, 7.8, 0.55), postMat);
-        post.position.set(px, 3.9, 0);
+      [-roadWidth / 2 - 0.5, roadWidth / 2 + 0.5].forEach((px) => {
+        const post = new THREE.Mesh(new THREE.BoxGeometry(0.55, 12.0, 0.55), postMat);
+        post.position.set(px, 6.0, 0);
         gantryGroup.add(post);
       });
 
-      // Overhead Steel Truss Crossbar
+      // Overhead Steel Truss Crossbar (at 11.5m height)
       const truss = new THREE.Mesh(
-        new THREE.BoxGeometry(roadWidth + 1.8, 0.95, 0.65),
+        new THREE.BoxGeometry(roadWidth + 2.0, 0.85, 0.65),
         postMat
       );
-      truss.position.set(0, 7.5, 0);
+      truss.position.set(0, 11.5, 0);
       gantryGroup.add(truss);
 
       // Traffic Signal Pods (Above each of the 4 lanes)
       [-9.5, -3.5, 3.5, 9.5].forEach((lx) => {
         const signalBox = new THREE.Mesh(
-          new THREE.BoxGeometry(0.75, 1.35, 0.35),
+          new THREE.BoxGeometry(0.7, 1.2, 0.35),
           this.barrierDarkMat
         );
-        signalBox.position.set(lx, 6.4, 0.35);
+        signalBox.position.set(lx, 10.5, 0.35);
         gantryGroup.add(signalBox);
 
         // Red light
-        const redL = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 12), new THREE.MeshBasicMaterial({ color: '#ef4444' }));
-        redL.position.set(lx, 6.7, 0.55);
+        const redL = new THREE.Mesh(new THREE.SphereGeometry(0.14, 10, 10), new THREE.MeshBasicMaterial({ color: '#ef4444' }));
+        redL.position.set(lx, 10.8, 0.55);
         gantryGroup.add(redL);
 
         // Green light
-        const greenL = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 12), new THREE.MeshBasicMaterial({ color: '#22c55e' }));
-        greenL.position.set(lx, 6.1, 0.55);
+        const greenL = new THREE.Mesh(new THREE.SphereGeometry(0.14, 10, 10), new THREE.MeshBasicMaterial({ color: '#22c55e' }));
+        greenL.position.set(lx, 10.2, 0.55);
         gantryGroup.add(greenL);
       });
 
-      // Overhead Green Destination Sign ("DOWNTOWN / AIRPORT")
+      // Overhead Green Destination Sign ("DOWNTOWN / AIRPORT") at 12m height
       const signBoard = new THREE.Mesh(
         new THREE.BoxGeometry(7.2, 1.8, 0.1),
         new THREE.MeshStandardMaterial({ color: '#047857', roughness: 0.4 })
       );
-      signBoard.position.set(0, 7.5, 0.35);
+      signBoard.position.set(0, 12.2, 0.35);
       gantryGroup.add(signBoard);
 
       const signBorder = new THREE.Mesh(
         new THREE.BoxGeometry(7.4, 2.0, 0.08),
         new THREE.MeshBasicMaterial({ color: '#ffffff' })
       );
-      signBorder.position.set(0, 7.5, 0.34);
+      signBorder.position.set(0, 12.2, 0.34);
       gantryGroup.add(signBorder);
 
       chunk.add(gantryGroup);

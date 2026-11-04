@@ -1,5 +1,6 @@
 // CityRacerGame.js - Master 3D Night City Highway Racer Game Controller
-// Fixes inverted controls, eliminates cone reflection mesh, adds true 3D graphics & suspension animation.
+// Fixes inverted controls, eliminates cone reflection mesh, adds true 3D graphics & suspension animation,
+// features responsive mobile touch controls, seamless Play Again restarts, and crash invulnerability.
 import * as THREE from 'three';
 import confetti from 'canvas-confetti';
 import { createMonsterPoliceCar, TrafficManager } from './CityRacerVehicles.js';
@@ -28,8 +29,9 @@ export class CityRacerGame {
     this.nitroEnergy = 100;
     this.isNitro = false;
 
-    // Health & Scoring
+    // Health, Invulnerability & Scoring
     this.shields = 3;
+    this.invulnerableTimer = 0;
     this.score = 0;
     this.distanceMeters = 0;
     this.nearMissCount = 0;
@@ -114,7 +116,7 @@ export class CityRacerGame {
               <div class="nitro-bar-fill" id="hud-nitro-fill"></div>
             </div>
             <div class="nitro-label">
-              <span>🚨 POLICE SIREN / NOS</span>
+              <span>🚨 NOS</span>
               <span id="hud-nitro-val">100%</span>
             </div>
           </div>
@@ -144,7 +146,7 @@ export class CityRacerGame {
         <!-- Near-Miss Floating Notification Area -->
         <div class="near-miss-container" id="near-miss-box"></div>
 
-        <!-- Desktop Controls Hint Bar -->
+        <!-- Desktop Controls Hint Bar (Shown on desktop with mouse only) -->
         <div class="cityracer-desktop-hints" id="desktop-hints">
           <span><kbd>A/D</kbd> or <kbd>←/→</kbd> Steer Lanes</span>
           <span><kbd>W/↑</kbd> Gas</span>
@@ -153,27 +155,31 @@ export class CityRacerGame {
           <span><kbd>C</kbd> Camera</span>
         </div>
 
-        <!-- Mobile Touch Controls Layer -->
+        <!-- Mobile Touch Controls Layer (Responsive, Ergonomic Thumb Controls) -->
         <div class="cityracer-mobile-controls" id="mobile-controls">
+          <!-- Left Thumb: Steering Rocker Buttons -->
           <div class="touch-steer-group">
             <button class="touch-ctrl-btn steer-btn" id="touch-left" aria-label="Steer Left">
-              <svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M15 19l-7-7 7-7v14z"/></svg>
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M15 19l-7-7 7-7v14z"/></svg>
             </button>
             <button class="touch-ctrl-btn steer-btn" id="touch-right" aria-label="Steer Right">
-              <svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor"><path d="M9 5l7 7-7 7V5z"/></svg>
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M9 5l7 7-7 7V5z"/></svg>
             </button>
           </div>
 
+          <!-- Right Thumb: Pedal & NOS Cluster -->
           <div class="touch-pedal-group">
             <button class="touch-ctrl-btn siren-btn" id="touch-nitro" aria-label="Police Siren Nitro">
               🚨 NOS
             </button>
-            <button class="touch-ctrl-btn brake-pedal" id="touch-brake" aria-label="Brake">
-              BRAKE
-            </button>
-            <button class="touch-ctrl-btn gas-pedal" id="touch-gas" aria-label="Accelerate">
-              GAS
-            </button>
+            <div class="touch-pedal-row">
+              <button class="touch-ctrl-btn brake-pedal" id="touch-brake" aria-label="Brake">
+                BRAKE
+              </button>
+              <button class="touch-ctrl-btn gas-pedal" id="touch-gas" aria-label="Accelerate">
+                GAS
+              </button>
+            </div>
           </div>
         </div>
 
@@ -217,12 +223,6 @@ export class CityRacerGame {
     this.hudDist = this.container.querySelector('#hud-dist');
     this.hudShields = this.container.querySelector('#hud-shields');
     this.nearMissBox = this.container.querySelector('#near-miss-box');
-
-    const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    if (isTouch) {
-      this.container.querySelector('#mobile-controls').style.display = 'flex';
-      this.container.querySelector('#desktop-hints').style.display = 'none';
-    }
   }
 
   initThree() {
@@ -238,7 +238,7 @@ export class CityRacerGame {
     this.camera = new THREE.PerspectiveCamera(54, width / height, 0.1, 750);
     this.camera.position.set(-3.5, 3.8, -7.5);
 
-    // 3. Renderer with locked DPR for performance & shadows
+    // 3. Renderer with locked DPR for performance & soft shadows
     this.renderer = new THREE.WebGLRenderer({
       antialias: true,
       powerPreference: 'high-performance',
@@ -246,7 +246,7 @@ export class CityRacerGame {
       depth: true,
     });
     this.renderer.setSize(width, height);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -263,12 +263,12 @@ export class CityRacerGame {
     this.sunLight = new THREE.DirectionalLight('#ffffff', 1.85);
     this.sunLight.position.set(20, 60, -25);
     this.sunLight.castShadow = true;
-    this.sunLight.shadow.mapSize.width = 2048;
-    this.sunLight.shadow.mapSize.height = 2048;
-    this.sunLight.shadow.camera.left = -30;
-    this.sunLight.shadow.camera.right = 30;
-    this.sunLight.shadow.camera.top = 30;
-    this.sunLight.shadow.camera.bottom = -30;
+    this.sunLight.shadow.mapSize.width = 1024;
+    this.sunLight.shadow.mapSize.height = 1024;
+    this.sunLight.shadow.camera.left = -28;
+    this.sunLight.shadow.camera.right = 28;
+    this.sunLight.shadow.camera.top = 28;
+    this.sunLight.shadow.camera.bottom = -28;
     this.sunLight.shadow.bias = -0.0001;
     this.scene.add(this.sunLight);
     this.scene.add(this.sunLight.target);
@@ -289,6 +289,7 @@ export class CityRacerGame {
   }
 
   initEvents() {
+    // Keyboard Controls
     this.handleKeyDown = (e) => {
       this.audio.resume();
       switch (e.code) {
@@ -314,7 +315,7 @@ export class CityRacerGame {
     window.addEventListener('keydown', this.handleKeyDown);
     window.addEventListener('keyup', this.handleKeyUp);
 
-    // Resize
+    // Responsive Canvas Resize
     this.handleResize = () => {
       if (!this.renderer || !this.camera || !this.canvasContainer) return;
       const w = this.canvasContainer.clientWidth || window.innerWidth;
@@ -344,26 +345,79 @@ export class CityRacerGame {
         : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.08"/></svg>';
     });
 
-    // Mobile Touch Controls
-    const bindTouch = (id, key) => {
+    // Mobile Touch & Pointer Buttons (Supports Touch & Mouse)
+    const bindButton = (id, key) => {
       const btn = this.container.querySelector(id);
       if (!btn) return;
-      btn.addEventListener('touchstart', (e) => {
-        e.preventDefault();
+
+      const press = (e) => {
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
         this.audio.resume();
         this.inputs[key] = true;
-      });
-      btn.addEventListener('touchend', (e) => {
-        e.preventDefault();
+        btn.classList.add('pressed');
+      };
+
+      const release = (e) => {
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
         this.inputs[key] = false;
-      });
+        btn.classList.remove('pressed');
+      };
+
+      btn.addEventListener('pointerdown', press);
+      btn.addEventListener('pointerup', release);
+      btn.addEventListener('pointercancel', release);
+      btn.addEventListener('pointerleave', release);
+
+      btn.addEventListener('touchstart', press, { passive: false });
+      btn.addEventListener('touchend', release, { passive: false });
+      btn.addEventListener('touchcancel', release, { passive: false });
     };
 
-    bindTouch('#touch-left', 'left');
-    bindTouch('#touch-right', 'right');
-    bindTouch('#touch-gas', 'forward');
-    bindTouch('#touch-brake', 'backward');
-    bindTouch('#touch-nitro', 'nitro');
+    bindButton('#touch-left', 'left');
+    bindButton('#touch-right', 'right');
+    bindButton('#touch-gas', 'forward');
+    bindButton('#touch-brake', 'backward');
+    bindButton('#touch-nitro', 'nitro');
+
+    // Direct Touch Canvas Drag Steering (Swipe horizontally anywhere on the road to steer)
+    let isDraggingCanvas = false;
+    let lastTouchX = 0;
+
+    this.handleCanvasPointerDown = (e) => {
+      if (
+        e.target.closest('.cityracer-top-bar') ||
+        e.target.closest('.cityracer-hud') ||
+        e.target.closest('.touch-ctrl-btn') ||
+        e.target.closest('.modal-card')
+      ) return;
+      isDraggingCanvas = true;
+      lastTouchX = e.clientX;
+      this.audio.resume();
+    };
+
+    this.handleCanvasPointerMove = (e) => {
+      if (!isDraggingCanvas) return;
+      const dx = e.clientX - lastTouchX;
+      lastTouchX = e.clientX;
+      // In our camera perspective, moving screen right is -X, screen left is +X
+      const deltaX = (dx / (window.innerWidth || 400)) * 18.0;
+      this.playerTargetX = Math.max(-11.5, Math.min(11.5, this.playerTargetX - deltaX));
+    };
+
+    this.handleCanvasPointerUp = () => {
+      isDraggingCanvas = false;
+    };
+
+    this.canvasContainer.addEventListener('pointerdown', this.handleCanvasPointerDown);
+    window.addEventListener('pointermove', this.handleCanvasPointerMove);
+    window.addEventListener('pointerup', this.handleCanvasPointerUp);
+    window.addEventListener('pointercancel', this.handleCanvasPointerUp);
 
     // Modal Actions
     this.container.querySelector('#btn-modal-restart').addEventListener('click', () => {
@@ -391,19 +445,32 @@ export class CityRacerGame {
   }
 
   handleCrash(rivalCar) {
+    if (this.invulnerableTimer > 0) return; // Shield grace period active
+
     this.shields--;
-    this.camShake = 0.55;
+    this.invulnerableTimer = 1.8; // 1.8 seconds crash recovery invulnerability
+    this.camShake = 0.45;
     this.audio.playCrash();
+
+    // Knock rival car forward & aside so vehicles don't get stuck into each other
+    if (rivalCar && rivalCar.mesh) {
+      rivalCar.mesh.position.z += 9;
+      rivalCar.speedKmh = this.speedKmh + 25;
+      const pushX = (rivalCar.mesh.position.x >= this.playerX) ? 1.8 : -1.8;
+      rivalCar.mesh.position.x = Math.max(-10.5, Math.min(10.5, rivalCar.mesh.position.x + pushX));
+    }
+
+    // Moderate speed recoil
+    this.speedKmh = Math.max(45, this.speedKmh * 0.7);
 
     const pips = this.container.querySelectorAll('.shield-pip');
     pips.forEach((pip, idx) => {
       if (idx >= this.shields) pip.classList.remove('active');
     });
 
-    this.speedKmh = Math.max(30, this.speedKmh * 0.45);
-
     if (this.shields <= 0) {
       this.gameState = 'gameover';
+      this.playerCar.mesh.visible = true;
       this.audio.update({ speedKmh: 0, isAccelerating: false, isBraking: false, isSiren: false });
 
       if (this.score > this.highScore) {
@@ -429,6 +496,13 @@ export class CityRacerGame {
   }
 
   restartGame() {
+    // 1. Cancel any active animation frame
+    if (this.animId) {
+      cancelAnimationFrame(this.animId);
+      this.animId = null;
+    }
+
+    // 2. Reset player state
     this.shields = 3;
     this.score = 0;
     this.distanceMeters = 0;
@@ -439,14 +513,55 @@ export class CityRacerGame {
     this.playerX = -3.5;
     this.playerTargetX = -3.5;
     this.playerZ = 0;
+    this.invulnerableTimer = 1.0; // 1s grace period on restart
+    this.camShake = 0;
     this.gameState = 'playing';
 
+    // 3. Clear all input states
+    this.inputs = {
+      left: false,
+      right: false,
+      forward: false,
+      backward: false,
+      nitro: false,
+    };
+
+    // 4. Reset player mesh transform and visibility
+    if (this.playerCar && this.playerCar.mesh) {
+      this.playerCar.mesh.position.set(this.playerX, 0, this.playerZ);
+      this.playerCar.mesh.rotation.set(0, 0, 0);
+      this.playerCar.chassis.rotation.set(0, 0, 0);
+      this.playerCar.chassis.position.set(0, 0, 0);
+      this.playerCar.mesh.visible = true;
+    }
+
+    // 5. Reset camera to starting chase position
+    this.camera.position.set(-3.5, 3.8, -7.5);
+    this.camera.lookAt(-3.5, 1.35, 16);
+
+    // 6. Reset Traffic & World
+    this.traffic.reset();
+    this.world.reset();
+
+    // 7. Reset HUD
     const pips = this.container.querySelectorAll('.shield-pip');
     pips.forEach((pip) => pip.classList.add('active'));
 
+    this.hudSpeed.textContent = '92';
+    this.hudScore.textContent = '0';
+    this.hudDist.textContent = '0 m';
+    this.hudNitroFill.style.width = '100%';
+    this.hudNitroVal.textContent = '100%';
+
     this.container.querySelector('#game-over-modal').classList.add('hidden');
-    this.traffic.reset();
-    this.world.reset();
+
+    // 8. Re-prime audio
+    this.audio.resume();
+    this.audio.update({ speedKmh: 92, isAccelerating: false, isBraking: false, isSiren: false });
+
+    // 9. Re-initialize clock and START the animation loop!
+    this.lastTime = performance.now();
+    this.animId = requestAnimationFrame(this.loop.bind(this));
   }
 
   updateCamera(delta) {
@@ -493,8 +608,17 @@ export class CityRacerGame {
   loop(timestamp) {
     if (this.gameState === 'gameover') return;
 
-    const dt = Math.min((timestamp - this.lastTime) / 1000, 0.05);
+    // Capped dt prevents physics explosion on browser frame drops
+    const dt = Math.min((timestamp - this.lastTime) / 1000, 0.033);
     this.lastTime = timestamp;
+
+    // --- 0. Invulnerability Flash Animation ---
+    if (this.invulnerableTimer > 0) {
+      this.invulnerableTimer = Math.max(0, this.invulnerableTimer - dt);
+      this.playerCar.mesh.visible = Math.floor(this.invulnerableTimer * 12) % 2 === 0;
+    } else {
+      this.playerCar.mesh.visible = true;
+    }
 
     // --- 1. Vehicle Steering & Horizontal Position (CORRECTED NON-INVERTED CONTROLS) ---
     // In this Three.js camera perspective (camera at -Z looking towards +Z):
@@ -651,6 +775,13 @@ export class CityRacerGame {
     window.removeEventListener('keydown', this.handleKeyDown);
     window.removeEventListener('keyup', this.handleKeyUp);
     window.removeEventListener('resize', this.handleResize);
+
+    if (this.canvasContainer) {
+      this.canvasContainer.removeEventListener('pointerdown', this.handleCanvasPointerDown);
+    }
+    window.removeEventListener('pointermove', this.handleCanvasPointerMove);
+    window.removeEventListener('pointerup', this.handleCanvasPointerUp);
+    window.removeEventListener('pointercancel', this.handleCanvasPointerUp);
 
     this.audio.destroy();
 
