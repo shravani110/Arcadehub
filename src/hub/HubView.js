@@ -22,6 +22,7 @@ export class HubView {
     const bloomBest = localStorage.getItem('bloom_high_score') || '0';
     const miniMilitiaBest = localStorage.getItem('minimilitia_high_score') || '0';
     const cityRacerBest = localStorage.getItem('cityracer_high_score') || '0';
+    const cupPongBest = localStorage.getItem('cuppong_best_score') || '0';
 
     this.container.innerHTML = `
       <div class="hub-wrapper">
@@ -38,6 +39,94 @@ export class HubView {
         </header>
 
         <main class="hub-grid">
+          <!-- Game: 3D CUP PONG (Beer Pong Tournament) -->
+          <article class="game-card card-cuppong" data-game="cuppong">
+            <div class="card-preview">
+              <span class="card-badge" style="background: rgba(16, 185, 129, 0.25); color: #34d399; border-color: rgba(16, 185, 129, 0.4);">3D CUP PONG</span>
+              <div class="preview-visual" style="display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #064e3b 0%, #022c22 100%);">
+                <svg width="180" height="180" viewBox="0 0 180 180">
+                  <!-- Green Ping Pong Table Surface -->
+                  <polygon points="15,160 165,160 145,55 35,55" fill="#0e8c4e" stroke="#ffffff" stroke-width="2"/>
+                  <!-- White Center Line -->
+                  <line x1="90" y1="55" x2="90" y2="160" stroke="#ffffff" stroke-width="2"/>
+                  <!-- Table Legs -->
+                  <line x1="25" y1="160" x2="25" y2="175" stroke="#94a3b8" stroke-width="3"/>
+                  <line x1="155" y1="160" x2="155" y2="175" stroke="#94a3b8" stroke-width="3"/>
+
+                  <!-- Red Solo Cups Triangle Formation (Matching Reference Screenshot 1) -->
+                  <!-- Back row: 4 cups -->
+                  <g id="cups-row-4">
+                    <ellipse cx="66" cy="72" rx="7" ry="3.5" fill="#ffffff" stroke="#ef4444" stroke-width="1.5"/>
+                    <path d="M 59 72 L 61 88 L 71 88 L 73 72 Z" fill="#dc2626"/>
+                    <ellipse cx="66" cy="72" rx="5" ry="2.5" fill="#f8fafc"/>
+
+                    <ellipse cx="82" cy="72" rx="7" ry="3.5" fill="#ffffff" stroke="#ef4444" stroke-width="1.5"/>
+                    <path d="M 75 72 L 77 88 L 87 88 L 89 72 Z" fill="#dc2626"/>
+                    <ellipse cx="82" cy="72" rx="5" ry="2.5" fill="#f8fafc"/>
+
+                    <ellipse cx="98" cy="72" rx="7" ry="3.5" fill="#ffffff" stroke="#ef4444" stroke-width="1.5"/>
+                    <path d="M 91 72 L 93 88 L 103 88 L 105 72 Z" fill="#dc2626"/>
+                    <ellipse cx="98" cy="72" rx="5" ry="2.5" fill="#f8fafc"/>
+
+                    <ellipse cx="114" cy="72" rx="7" ry="3.5" fill="#ffffff" stroke="#ef4444" stroke-width="1.5"/>
+                    <path d="M 107 72 L 109 88 L 119 88 L 121 72 Z" fill="#dc2626"/>
+                    <ellipse cx="114" cy="72" rx="5" ry="2.5" fill="#f8fafc"/>
+                  </g>
+
+                  <!-- Row 3: 3 cups -->
+                  <g id="cups-row-3">
+                    <ellipse cx="74" cy="85" rx="8" ry="4" fill="#ffffff" stroke="#ef4444" stroke-width="1.5"/>
+                    <path d="M 66 85 L 68 103 L 80 103 L 82 85 Z" fill="#e11d48"/>
+                    <ellipse cx="74" cy="85" rx="6" ry="3" fill="#f8fafc"/>
+
+                    <ellipse cx="90" cy="85" rx="8" ry="4" fill="#ffffff" stroke="#ef4444" stroke-width="1.5"/>
+                    <path d="M 82 85 L 84 103 L 96 103 L 98 85 Z" fill="#e11d48"/>
+                    <ellipse cx="90" cy="85" rx="6" ry="3" fill="#f8fafc"/>
+
+                    <ellipse cx="106" cy="85" rx="8" ry="4" fill="#ffffff" stroke="#ef4444" stroke-width="1.5"/>
+                    <path d="M 98 85 L 100 103 L 112 103 L 114 85 Z" fill="#e11d48"/>
+                    <ellipse cx="106" cy="85" rx="6" ry="3" fill="#f8fafc"/>
+                  </g>
+
+                  <!-- Row 2: 2 cups -->
+                  <g id="cups-row-2">
+                    <ellipse cx="82" cy="100" rx="9" ry="4.5" fill="#ffffff" stroke="#ef4444" stroke-width="1.5"/>
+                    <path d="M 73 100 L 76 120 L 88 120 L 91 100 Z" fill="#ef4444"/>
+                    <ellipse cx="82" cy="100" rx="7" ry="3.5" fill="#f8fafc"/>
+
+                    <ellipse cx="98" cy="100" rx="9" ry="4.5" fill="#ffffff" stroke="#ef4444" stroke-width="1.5"/>
+                    <path d="M 89 100 L 92 120 L 104 120 L 107 100 Z" fill="#ef4444"/>
+                    <ellipse cx="98" cy="100" rx="7" ry="3.5" fill="#f8fafc"/>
+                  </g>
+
+                  <!-- Row 1: 1 cup (front) -->
+                  <g id="cups-row-1">
+                    <ellipse cx="90" cy="118" rx="10" ry="5" fill="#ffffff" stroke="#f43f5e" stroke-width="2"/>
+                    <path d="M 80 118 L 83 140 L 97 140 L 100 118 Z" fill="#f43f5e"/>
+                    <ellipse cx="90" cy="118" rx="8" ry="4" fill="#f8fafc"/>
+                  </g>
+
+                  <!-- Flying Ping Pong Ball with Motion Trail (Matching Image 1) -->
+                  <path d="M 52 165 Q 68 145 80 128" fill="none" stroke="rgba(255, 255, 255, 0.45)" stroke-width="8" stroke-linecap="round"/>
+                  <path d="M 58 160 Q 70 142 80 128" fill="none" stroke="rgba(255, 255, 255, 0.85)" stroke-width="4" stroke-linecap="round"/>
+                  <circle cx="80" cy="128" r="8" fill="#ffffff" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.3))"/>
+                </svg>
+              </div>
+            </div>
+            <div class="card-content">
+              <h2 class="card-title">Cup Pong</h2>
+              <p class="card-desc">Classic 3D Beer Pong! Swipe up to throw ping-pong balls with realistic parabolic physics, table bounces, and plastic rim deflections. Clear all 10 cups to win against the Bot or challenge a friend in 2-Player mode!</p>
+              <div class="card-footer">
+                <span class="card-tag">Difficulty: Easy / Med / Hard</span>
+                <button class="card-play-btn">
+                  Play Game
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M5 3l14 9-14 9V3z"/></svg>
+                </button>
+              </div>
+            </div>
+          </article>
+
+
           <!-- Game 0: Midnight City Monster Police Racer -->
           <article class="game-card card-cityracer" data-game="cityracer">
             <div class="card-preview">

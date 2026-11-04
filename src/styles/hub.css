@@ -349,3 +349,18 @@
     height: 10px;
   }
 }
+
+/* Cup Pong Hub Card */
+.card-cuppong .card-badge {
+  background: rgba(16, 185, 129, 0.25);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.card-cuppong .card-play-btn {
+  background: linear-gradient(135deg, #059669, #10b981);
+}
+
+.card-cuppong .card-play-btn:hover {
+  background: linear-gradient(135deg, #10b981, #34d399);
+}

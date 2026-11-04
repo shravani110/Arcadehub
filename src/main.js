@@ -15,6 +15,7 @@ import './styles/katoricatch.css';
 import './styles/masalamemory.css';
 import './styles/minimilitia.css';
 import './styles/cityracer.css';
+import './styles/cuppong.css';
 
 import { HubView } from './hub/HubView.js';
 
@@ -120,6 +121,12 @@ class ArcadeApp {
         case 'masala-memory': {
           const { MasalaMemoryGame } = await import('./games/masalamemory/MasalaMemoryGame.js');
           this.currentGame = new MasalaMemoryGame(this.appContainer, () => this.navigateTo('hub'));
+          break;
+        }
+        case 'cuppong':
+        case 'cup-pong': {
+          const { CupPongGame } = await import('./games/cuppong/CupPongGame.js');
+          this.currentGame = new CupPongGame(this.appContainer, () => this.navigateTo('hub'));
           break;
         }
         case 'cityracer':
