@@ -9,20 +9,29 @@ export class HubView {
   }
 
   render() {
+    if (!this.container) return;
     const isMuted = soundManager.isMuted();
 
+    const safeGet = (key, fallback = '0') => {
+      try {
+        return (typeof window !== 'undefined' && window.localStorage && window.localStorage.getItem(key)) || fallback;
+      } catch (e) {
+        return fallback;
+      }
+    };
+
     // High Scores
-    const tiffinRunBest = localStorage.getItem('tiffinrun_high_score') || '0';
-    const katoriCatchBest = localStorage.getItem('katoricatch_high_score') || '0';
-    const masalaMemoryBest = localStorage.getItem('masalamemory_high_score') || '0';
-    const dumplingBest = localStorage.getItem('dumpling_high_score') || '0';
-    const lastDropBest = localStorage.getItem('lastdrop_high_score') || '0';
-    const blockBlastBest = localStorage.getItem('blockblast_high_score') || '0';
-    const fruitSliceBest = localStorage.getItem('fruitslice_high_score') || '0';
-    const bloomBest = localStorage.getItem('bloom_high_score') || '0';
-    const miniMilitiaBest = localStorage.getItem('minimilitia_high_score') || '0';
-    const cityRacerBest = localStorage.getItem('cityracer_high_score') || '0';
-    const cupPongBest = localStorage.getItem('cuppong_best_score') || '0';
+    const tiffinRunBest = safeGet('tiffinrun_high_score', '0');
+    const katoriCatchBest = safeGet('katoricatch_high_score', '0');
+    const masalaMemoryBest = safeGet('masalamemory_high_score', '0');
+    const dumplingBest = safeGet('dumpling_high_score', '0');
+    const lastDropBest = safeGet('lastdrop_high_score', '0');
+    const blockBlastBest = safeGet('blockblast_high_score', '0');
+    const fruitSliceBest = safeGet('fruitslice_high_score', '0');
+    const bloomBest = safeGet('bloom_high_score', '0');
+    const miniMilitiaBest = safeGet('minimilitia_high_score', '0');
+    const cityRacerBest = safeGet('cityracer_high_score', '0');
+    const cupPongBest = safeGet('cuppong_best_score', '0');
 
     this.container.innerHTML = `
       <div class="hub-wrapper">

@@ -259,9 +259,11 @@ export class CupPongGame {
     this.camera = new THREE.PerspectiveCamera(fov, width / height, 0.1, 100);
 
     // Initial Camera Positioning tuned for mobile
-    this.camera.position.set(0, 2.9, -5.6);
-    this.camTargetPos.set(0, 2.9, -5.6);
-    this.camLookTarget.set(0, 0.45, 2.2);
+    const initCamHeight = isMobile ? 5.6 : 6.2;
+    const initCamZ = isMobile ? -6.6 : -7.4;
+    this.camera.position.set(0, initCamHeight, initCamZ);
+    this.camTargetPos.set(0, initCamHeight, initCamZ);
+    this.camLookTarget.set(0, 0.45, 0.8);
     this.camera.lookAt(this.camLookTarget);
 
     this.renderer = new THREE.WebGLRenderer({
@@ -372,7 +374,7 @@ export class CupPongGame {
    * Creates a high-fidelity 3D Solo Cup with realistic segmented horizontal ridges,
    * glossy exterior plastic, white interior lining, and dynamic wobble physics.
    */
-  createSoloCup(colorHex, isRed) {
+  createSoloCup(colorHex, owner = 'p2') {
     const cupGroup = new THREE.Group();
 
     const topRadius = 0.36;
@@ -452,6 +454,7 @@ export class CupPongGame {
       height: cupHeight,
       isSunk: false,
       colorHex,
+      owner,
       // Spring wobble physics parameters
       wobbleX: 0,
       wobbleZ: 0,
@@ -468,24 +471,56 @@ export class CupPongGame {
     const rowSpacing = 0.64;
 
     if (this.gameMode === '3p') {
-      // 3-Player Tournament Cup Layout:
-      // 10 Central Target Cups in pyramid formation at +Z (Z from 4.0 to 6.2)
-      const redBaseZ = 4.2;
-      const rows = [
+      // 3-Player Mode: SEPARATE SECTION FOR EACH OF THE 3 PLAYERS!
+      // 1. Player 1 (Blue) Section at Near End (-Z, centered at X=0, Z=-3.7 to -5.0)
+      const p1Rows = [
         [0],
         [-0.5, 0.5],
         [-1.0, 0, 1.0],
-        [-1.5, -0.5, 0.5, 1.5],
       ];
-
-      const cupColors = ['#ef4444', '#0284c7', '#059669']; // Tri-color cups
-
-      rows.forEach((row, rowIdx) => {
-        const z = redBaseZ + rowIdx * rowSpacing;
-        row.forEach((xFrac, cIdx) => {
+      p1Rows.forEach((row, rowIdx) => {
+        const z = -3.72 - rowIdx * rowSpacing;
+        row.forEach((xFrac) => {
           const x = xFrac * cupSpacing;
-          const color = cupColors[(rowIdx + cIdx) % cupColors.length];
-          const cup = this.createSoloCup(color, color === '#ef4444');
+          const cup = this.createSoloCup('#0284c7', 'p1');
+          cup.group.position.set(x, 0, z);
+          cup.targetX = x;
+          cup.targetZ = z;
+          this.scene.add(cup.group);
+          this.activeCups.push(cup);
+        });
+      });
+
+      // 2. Player 2 (Red) Section at Far-Left (+Z, centered at X=-1.25, Z=+3.7 to +5.0)
+      const p2Rows = [
+        [0],
+        [-0.5, 0.5],
+        [-1.0, 0, 1.0],
+      ];
+      p2Rows.forEach((row, rowIdx) => {
+        const z = 3.72 + rowIdx * rowSpacing;
+        row.forEach((xFrac) => {
+          const x = -1.25 + xFrac * cupSpacing;
+          const cup = this.createSoloCup('#ef4444', 'p2');
+          cup.group.position.set(x, 0, z);
+          cup.targetX = x;
+          cup.targetZ = z;
+          this.scene.add(cup.group);
+          this.activeCups.push(cup);
+        });
+      });
+
+      // 3. Player 3 (Green) Section at Far-Right (+Z, centered at X=+1.25, Z=+3.7 to +5.0)
+      const p3Rows = [
+        [0],
+        [-0.5, 0.5],
+        [-1.0, 0, 1.0],
+      ];
+      p3Rows.forEach((row, rowIdx) => {
+        const z = 3.72 + rowIdx * rowSpacing;
+        row.forEach((xFrac) => {
+          const x = 1.25 + xFrac * cupSpacing;
+          const cup = this.createSoloCup('#059669', 'p3');
           cup.group.position.set(x, 0, z);
           cup.targetX = x;
           cup.targetZ = z;
@@ -494,20 +529,39 @@ export class CupPongGame {
         });
       });
     } else {
-      // Standard 1P / 2P: 10 Target Cups at Far Side (+Z)
-      const redBaseZ = 4.2;
-      const rows = [
+      // 1P & 2P Modes: TWO SEPARATE SECTIONS (Matching Reference Screenshot)!
+      // Section 1: Far End RED Cups (Player 2 / Bot), 10 cups in 4-3-2-1 triangle
+      const redRows = [
         [0],
         [-0.5, 0.5],
         [-1.0, 0, 1.0],
         [-1.5, -0.5, 0.5, 1.5],
       ];
-
-      rows.forEach((row, rowIdx) => {
-        const z = redBaseZ + rowIdx * rowSpacing;
+      redRows.forEach((row, rowIdx) => {
+        const z = 3.68 + rowIdx * rowSpacing;
         row.forEach((xFrac) => {
           const x = xFrac * cupSpacing;
-          const cup = this.createSoloCup('#ef4444', true);
+          const cup = this.createSoloCup('#ef4444', 'p2');
+          cup.group.position.set(x, 0, z);
+          cup.targetX = x;
+          cup.targetZ = z;
+          this.scene.add(cup.group);
+          this.activeCups.push(cup);
+        });
+      });
+
+      // Section 2: Near End BLUE Cups (Player 1), 10 cups in 4-3-2-1 triangle
+      const blueRows = [
+        [0],
+        [-0.5, 0.5],
+        [-1.0, 0, 1.0],
+        [-1.5, -0.5, 0.5, 1.5],
+      ];
+      blueRows.forEach((row, rowIdx) => {
+        const z = -3.68 - rowIdx * rowSpacing;
+        row.forEach((xFrac) => {
+          const x = xFrac * cupSpacing;
+          const cup = this.createSoloCup('#0284c7', 'p1');
           cup.group.position.set(x, 0, z);
           cup.targetX = x;
           cup.targetZ = z;
@@ -559,14 +613,28 @@ export class CupPongGame {
     this.ballState = 'idle';
     this.ballVel.set(0, 0, 0);
 
-    // Positioned at Z = -2.2, which puts it at ~15% from the screen bottom on mobile!
-    this.ballPos.set(0, this.ballRadius, -2.2);
+    // Ball starting position is positioned in front of current turn player's cups
+    if (this.gameMode === '3p') {
+      if (this.currentTurn === 'p1') {
+        this.ballPos.set(0, this.ballRadius + 0.02, -2.4);
+      } else if (this.currentTurn === 'p2') {
+        this.ballPos.set(-1.25, this.ballRadius + 0.02, 2.4);
+      } else {
+        this.ballPos.set(1.25, this.ballRadius + 0.02, 2.4);
+      }
+    } else {
+      if (this.currentTurn === 'bot' || this.currentTurn === 'p2') {
+        this.ballPos.set(0, this.ballRadius + 0.02, 2.4);
+      } else {
+        this.ballPos.set(0, this.ballRadius + 0.02, -2.4);
+      }
+    }
 
     this.ball.position.copy(this.ballPos);
     this.ballShadow.position.set(this.ballPos.x, 0.005, this.ballPos.z);
     this.ballShadow.scale.set(1, 1, 1);
     this.ballRing.position.set(this.ballPos.x, 0.006, this.ballPos.z);
-    this.ballRing.visible = true;
+    this.ballRing.visible = (this.currentTurn !== 'bot');
   }
 
   initEvents() {
@@ -903,12 +971,19 @@ export class CupPongGame {
     const speedRatio = Math.min(dragY / (elapsed * 450), 1.5);
     const combinedPower = power * 0.65 + speedRatio * 0.35;
 
-    // Mobile calibrated velocity (throws forward from Z = -2.2 towards cups at Z = +4.5 to +6.5)
-    const forwardSpeed = 15.2 + combinedPower * 4.4;
-    const upwardSpeed = 8.2 + combinedPower * 3.2;
-    const lateralSpeed = (dragX / 130) * 3.8;
-
-    this.ballVel.set(lateralSpeed, upwardSpeed, forwardSpeed);
+    if (this.currentTurn === 'p1') {
+      // Player 1 throws forward from Near End towards Far End (+Z)
+      const forwardSpeed = 15.2 + combinedPower * 4.4;
+      const upwardSpeed = 8.2 + combinedPower * 3.2;
+      const lateralSpeed = (dragX / 130) * 3.8;
+      this.ballVel.set(lateralSpeed, upwardSpeed, forwardSpeed);
+    } else {
+      // Player 2 or 3 throwing from Far End towards Near End (-Z)
+      const forwardSpeed = -(15.2 + combinedPower * 4.4);
+      const upwardSpeed = 8.2 + combinedPower * 3.2;
+      const lateralSpeed = -(dragX / 130) * 3.8;
+      this.ballVel.set(lateralSpeed, upwardSpeed, forwardSpeed);
+    }
   }
 
   executeBotThrow() {
@@ -927,13 +1002,14 @@ export class CupPongGame {
       }
     }, 2800);
 
-    const active = this.activeCups.filter((c) => !c.isSunk);
-    if (active.length === 0) {
+    // Bot throws from Far End towards Player 1's Blue cups at Near End!
+    const targets = this.activeCups.filter((c) => !c.isSunk && c.owner === 'p1');
+    if (targets.length === 0) {
       this.triggerVictory();
       return;
     }
 
-    const targetCup = active[Math.floor(Math.random() * active.length)];
+    const targetCup = targets[Math.floor(Math.random() * targets.length)];
     const startPos = this.ballPos;
 
     const dx = targetCup.targetX - startPos.x;
@@ -946,8 +1022,8 @@ export class CupPongGame {
       errorX = (Math.random() - 0.5) * 0.9;
       errorZ = (Math.random() - 0.5) * 1.3;
     } else if (this.difficulty === 'medium') {
-      errorX = (Math.random() - 0.5) * 0.4;
-      errorZ = (Math.random() - 0.5) * 0.52;
+      errorX = (Math.random() - 0.5) * 0.38;
+      errorZ = (Math.random() - 0.5) * 0.48;
     } else {
       errorX = (Math.random() - 0.5) * 0.12;
       errorZ = (Math.random() - 0.5) * 0.16;
@@ -1015,11 +1091,11 @@ export class CupPongGame {
       if (this.currentTurn === 'p1') {
         this.p1Score++;
         this.hudOpponentScore.textContent = this.p1Score;
-        this.showToast('+1 CUP SUNK! 🎯');
+        this.showToast('+1 RED CUP SUNK! 🎯');
       } else {
         this.p2Score++;
         this.hudPlayerScore.textContent = this.p2Score;
-        this.showToast('BOT SCORED! 💥');
+        this.showToast(this.gameMode === '1p' ? 'BOT SUNK YOUR CUP! 💥' : 'PLAYER 2 SCORED! 🔥');
       }
     }
 
@@ -1041,8 +1117,24 @@ export class CupPongGame {
     sinkAnim();
 
     // Check Victory Condition
-    const remainingCups = this.activeCups.filter((c) => !c.isSunk).length;
-    if (remainingCups === 0) {
+    let matchOver = false;
+    if (this.gameMode === '3p') {
+      const p1Alive = this.activeCups.some((c) => !c.isSunk && c.owner === 'p1');
+      const p2Alive = this.activeCups.some((c) => !c.isSunk && c.owner === 'p2');
+      const p3Alive = this.activeCups.some((c) => !c.isSunk && c.owner === 'p3');
+      const aliveCount = (p1Alive ? 1 : 0) + (p2Alive ? 1 : 0) + (p3Alive ? 1 : 0);
+      if (aliveCount <= 1 || this.p1Score >= 6 || this.p2Score >= 6 || this.p3Score >= 6) {
+        matchOver = true;
+      }
+    } else {
+      const redRemaining = this.activeCups.filter((c) => !c.isSunk && c.owner === 'p2').length;
+      const blueRemaining = this.activeCups.filter((c) => !c.isSunk && c.owner === 'p1').length;
+      if (redRemaining === 0 || blueRemaining === 0 || this.p1Score >= 10 || this.p2Score >= 10) {
+        matchOver = true;
+      }
+    }
+
+    if (matchOver) {
       setTimeout(() => {
         this.triggerVictory();
         this.isTransitioning = false;
@@ -1316,20 +1408,21 @@ export class CupPongGame {
       this.camTargetPos.set(0, 9.8, -9.5);
       this.camLookTarget.set(0, 0.4, 0.5);
     } else {
-      // Dynamic Mobile Aim Camera:
-      // Perfectly balances ball in lower 15% and cups in upper half
+      // Master Elevated Portrait Camera - frames both Near Blue cups & Far Red cups!
+      const camHeight = isMobile ? 5.6 : 6.2;
+      const camZ = isMobile ? -6.6 : -7.4;
+
       if (this.ballState === 'flying') {
+        // Gentle tracking so ball arc is clearly visible while keeping table framed
         this.camTargetPos.set(
-          this.ballPos.x * 0.35,
-          Math.max(2.8, this.ballPos.y + 1.8),
-          Math.min(1.8, this.ballPos.z - 4.2)
+          this.ballPos.x * 0.2,
+          camHeight + Math.max(0, (this.ballPos.y - 0.5) * 0.15),
+          camZ + (this.ballPos.z + 2.4) * 0.12
         );
-        this.camLookTarget.set(this.ballPos.x * 0.45, 0.5, this.ballPos.z + 4.2);
+        this.camLookTarget.set(this.ballPos.x * 0.25, 0.45, 0.8 + this.ballPos.z * 0.15);
       } else {
-        const camHeight = isMobile ? 2.9 : 3.4;
-        const camZ = isMobile ? -5.6 : -6.8;
         this.camTargetPos.set(0, camHeight, camZ);
-        this.camLookTarget.set(0, 0.45, 2.2);
+        this.camLookTarget.set(0, 0.45, 0.8);
       }
     }
 

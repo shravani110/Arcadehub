@@ -20,13 +20,20 @@ import './styles/cuppong.css';
 import { HubView } from './hub/HubView.js';
 
 class ArcadeApp {
-  constructor() {
-    this.appContainer = document.getElementById('app');
+  constructor(container) {
+    this.appContainer = container || document.getElementById('app');
     this.currentGame = null;
     this.currentView = null;
     this.currentRoute = null;
 
     this.initRouter();
+  }
+
+  getContainer() {
+    if (!this.appContainer || !this.appContainer.isConnected) {
+      this.appContainer = document.getElementById('app');
+    }
+    return this.appContainer;
   }
 
   initRouter() {
@@ -43,6 +50,13 @@ class ArcadeApp {
   }
 
   async route() {
+    const container = this.getContainer();
+    if (!container) {
+      // DOM not yet populated, schedule next frame
+      setTimeout(() => this.route(), 40);
+      return;
+    }
+
     const rawHash = window.location.hash.replace('#', '') || 'hub';
     const hash = rawHash.split('?')[0].replace(/^game=/, '');
 
@@ -65,7 +79,7 @@ class ArcadeApp {
       this.currentView = null;
     }
 
-    this.appContainer.innerHTML = '';
+    container.innerHTML = '';
 
     try {
       switch (hash) {
@@ -223,4 +237,23 @@ class ArcadeApp {
   }
 }
 
-new ArcadeApp();
+function bootArcade() {
+  const el = document.getElementById('app');
+  if (el) {
+    new ArcadeApp(el);
+  } else {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => bootArcade(), { once: true });
+    } else {
+      setTimeout(bootArcade, 20);
+    }
+  }
+}
+
+if (typeof window !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootArcade, { once: true });
+  } else {
+    bootArcade();
+  }
+}

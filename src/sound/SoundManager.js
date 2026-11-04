@@ -3,7 +3,11 @@
 class SoundManager {
   constructor() {
     this.ctx = null;
-    this.muted = localStorage.getItem('arcade_sound_muted') === 'true';
+    try {
+      this.muted = typeof window !== 'undefined' && window.localStorage && window.localStorage.getItem('arcade_sound_muted') === 'true';
+    } catch (e) {
+      this.muted = false;
+    }
     this.rollOsc = null;
     this.rollGain = null;
   }
@@ -22,8 +26,12 @@ class SoundManager {
 
   toggleMute() {
     this.muted = !this.muted;
-    localStorage.setItem('arcade_sound_muted', this.muted);
-    if (this.muted && this.rollGain) {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem('arcade_sound_muted', this.muted);
+      }
+    } catch (e) {}
+    if (this.muted && this.rollGain && this.ctx) {
       this.rollGain.gain.setValueAtTime(0, this.ctx.currentTime);
     }
     return this.muted;

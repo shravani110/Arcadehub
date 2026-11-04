@@ -1,12 +1,18 @@
 /* hub.css - Arcade Portal Lobby Styles */
 .hub-wrapper {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
   background: radial-gradient(circle at 50% 20%, #161b26 0%, #080a0f 100%);
   overflow-y: auto;
   overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
   padding: 40px 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  box-sizing: border-box;
 }
 
 .hub-header {
@@ -258,7 +264,12 @@
 
 @media (max-width: 599px) {
   .hub-wrapper {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    flex: 1 1 auto;
     padding: max(16px, env(safe-area-inset-top, 16px)) 10px max(24px, env(safe-area-inset-bottom, 24px)) 10px;
+    box-sizing: border-box;
   }
 
   .hub-header {
