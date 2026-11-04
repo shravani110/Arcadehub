@@ -14,6 +14,7 @@ import './styles/tiffinrun.css';
 import './styles/katoricatch.css';
 import './styles/masalamemory.css';
 import './styles/minimilitia.css';
+import './styles/cityracer.css';
 
 import { HubView } from './hub/HubView.js';
 
@@ -119,6 +120,13 @@ class ArcadeApp {
         case 'masala-memory': {
           const { MasalaMemoryGame } = await import('./games/masalamemory/MasalaMemoryGame.js');
           this.currentGame = new MasalaMemoryGame(this.appContainer, () => this.navigateTo('hub'));
+          break;
+        }
+        case 'cityracer':
+        case 'city-racer':
+        case 'midnightracer': {
+          const { CityRacerGame } = await import('./games/cityracer/CityRacerGame.js');
+          this.currentGame = new CityRacerGame(this.appContainer, () => this.navigateTo('hub'));
           break;
         }
         case 'minimilitia':

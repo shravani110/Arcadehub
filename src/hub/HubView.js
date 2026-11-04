@@ -21,6 +21,7 @@ export class HubView {
     const fruitSliceBest = localStorage.getItem('fruitslice_high_score') || '0';
     const bloomBest = localStorage.getItem('bloom_high_score') || '0';
     const miniMilitiaBest = localStorage.getItem('minimilitia_high_score') || '0';
+    const cityRacerBest = localStorage.getItem('cityracer_high_score') || '0';
 
     this.container.innerHTML = `
       <div class="hub-wrapper">
@@ -37,6 +38,91 @@ export class HubView {
         </header>
 
         <main class="hub-grid">
+          <!-- Game 0: Midnight City Monster Police Racer -->
+          <article class="game-card card-cityracer" data-game="cityracer">
+            <div class="card-preview">
+              <span class="card-badge" style="background: rgba(225, 29, 72, 0.25); color: #fb7185; border-color: rgba(225, 29, 72, 0.4);">3D NIGHT CITY RACER</span>
+              <div class="preview-visual" style="display: flex; align-items: center; justify-content: center; background: radial-gradient(circle, #0f172a 0%, #030712 100%);">
+                <svg width="180" height="180" viewBox="0 0 180 180">
+                  <!-- Night City Buildings Skyline -->
+                  <rect x="10" y="25" width="45" height="110" fill="#1e293b"/>
+                  <rect x="16" y="35" width="6" height="8" fill="#fef08a"/>
+                  <rect x="28" y="35" width="6" height="8" fill="#fef08a"/>
+                  <rect x="40" y="35" width="6" height="8" fill="#38bdf8"/>
+                  <rect x="16" y="50" width="6" height="8" fill="#fef08a"/>
+                  <rect x="28" y="50" width="6" height="8" fill="#090d16"/>
+                  <rect x="40" y="50" width="6" height="8" fill="#fef08a"/>
+                  
+                  <rect x="60" y="15" width="55" height="120" fill="#18202f"/>
+                  <rect x="66" y="25" width="6" height="8" fill="#fef08a"/>
+                  <rect x="78" y="25" width="6" height="8" fill="#fef08a"/>
+                  <rect x="90" y="25" width="6" height="8" fill="#fef08a"/>
+                  <rect x="102" y="25" width="6" height="8" fill="#38bdf8"/>
+
+                  <rect x="120" y="30" width="50" height="105" fill="#1e293b"/>
+                  <rect x="126" y="40" width="6" height="8" fill="#fef08a"/>
+                  <rect x="138" y="40" width="6" height="8" fill="#fef08a"/>
+                  <rect x="150" y="40" width="6" height="8" fill="#38bdf8"/>
+
+                  <!-- Overhead Traffic Gantry -->
+                  <rect x="5" y="70" width="170" height="4" fill="#475569"/>
+                  <circle cx="70" cy="72" r="3" fill="#22c55e"/>
+                  <circle cx="110" cy="72" r="3" fill="#ef4444"/>
+                  
+                  <!-- Highway Asphalt and Lane Markings -->
+                  <polygon points="5,175 175,175 140,85 40,85" fill="#111827"/>
+                  <line x1="90" y1="85" x2="88" y2="175" stroke="#facc15" stroke-width="2"/>
+                  <line x1="93" y1="85" x2="93" y2="175" stroke="#facc15" stroke-width="2"/>
+                  <line x1="68" y1="85" x2="52" y2="175" stroke="#ffffff" stroke-width="2" stroke-dasharray="6,6"/>
+                  <line x1="115" y1="85" x2="132" y2="175" stroke="#ffffff" stroke-width="2" stroke-dasharray="6,6"/>
+                  <polygon points="38,85 43,85 18,175 10,175" fill="#64748b"/>
+
+                  <!-- Red Tuner Rival Car in Left Lane (Matching Photo) -->
+                  <rect x="24" y="125" width="22" height="34" rx="4" fill="#dc2626"/>
+                  <rect x="26" y="132" width="18" height="14" rx="2" fill="#09090b"/>
+                  <rect x="22" y="122" width="26" height="4" rx="1" fill="#09090b"/>
+                  <rect x="20" y="130" width="4" height="10" rx="1" fill="#18181b"/>
+                  <rect x="46" y="130" width="4" height="10" rx="1" fill="#18181b"/>
+                  <rect x="20" y="146" width="4" height="10" rx="1" fill="#18181b"/>
+                  <rect x="46" y="146" width="4" height="10" rx="1" fill="#18181b"/>
+                  <line x1="26" y1="148" x2="44" y2="148" stroke="#ef4444" stroke-width="2"/>
+
+                  <!-- Player Monster Police Interceptor -->
+                  <rect x="68" y="126" width="12" height="36" rx="4" fill="#111111" stroke="#334155" stroke-width="1.5"/>
+                  <line x1="68" y1="132" x2="80" y2="132" stroke="#475569" stroke-width="1.5"/>
+                  <line x1="68" y1="138" x2="80" y2="138" stroke="#475569" stroke-width="1.5"/>
+                  <line x1="68" y1="144" x2="80" y2="144" stroke="#475569" stroke-width="1.5"/>
+                  <line x1="68" y1="150" x2="80" y2="150" stroke="#475569" stroke-width="1.5"/>
+                  <line x1="68" y1="156" x2="80" y2="156" stroke="#475569" stroke-width="1.5"/>
+
+                  <rect x="122" y="126" width="12" height="36" rx="4" fill="#111111" stroke="#334155" stroke-width="1.5"/>
+                  <line x1="122" y1="132" x2="134" y2="132" stroke="#475569" stroke-width="1.5"/>
+                  <line x1="122" y1="138" x2="134" y2="138" stroke="#475569" stroke-width="1.5"/>
+                  <line x1="122" y1="144" x2="134" y2="144" stroke="#475569" stroke-width="1.5"/>
+                  <line x1="122" y1="150" x2="134" y2="150" stroke="#475569" stroke-width="1.5"/>
+                  <line x1="122" y1="156" x2="134" y2="156" stroke="#475569" stroke-width="1.5"/>
+
+                  <rect x="76" y="128" width="50" height="38" rx="6" fill="#475569"/>
+                  <polygon points="82,130 120,130 114,148 88,148" fill="#0f172a"/>
+                  <ellipse cx="88" cy="164" rx="3" ry="2" fill="#09090b" stroke="#e2e8f0" stroke-width="1"/>
+                  <ellipse cx="114" cy="164" rx="3" ry="2" fill="#09090b" stroke="#e2e8f0" stroke-width="1"/>
+                  <rect x="91" y="122" width="9" height="5" rx="1.5" fill="#38bdf8"/>
+                  <rect x="102" y="122" width="9" height="5" rx="1.5" fill="#ef4444"/>
+                </svg>
+              </div>
+            </div>
+            <div class="card-content">
+              <h2 class="card-title">Midnight Highway: Monster Police</h2>
+              <p class="card-desc">High-speed 3D night highway pursuit! Pilot the Monster Police Interceptor with chunky off-road tires, weave through heavy city traffic, dodge red tuner rivals, trigger police sirens, and rack up near-miss combos!</p>
+              <div class="card-footer">
+                <span class="card-tag">Best: ${cityRacerBest} pts</span>
+                <button class="card-play-btn">
+                  Play Game
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M5 3l14 9-14 9V3z"/></svg>
+                </button>
+              </div>
+            </div>
+          </article>
           <!-- Game 1: Tiffin Run -->
           <article class="game-card card-tiffinrun" data-game="tiffinrun">
             <div class="card-preview">
